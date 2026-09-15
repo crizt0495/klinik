@@ -1,6 +1,7 @@
 import { db } from "@/db";
-import { settings } from "@/db/schema";
+import { settings, organizations } from "@/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
+import type { SessionUser } from "@/lib/auth/session";
 
 const DEFAULT_SETTINGS: Record<string, unknown> = {
   clinic_name: "Klinik Sehat",
@@ -60,3 +61,18 @@ export class SettingsService {
 }
 
 export const settingsService = new SettingsService();
+
+export async function getOrganizationSettings(user: SessionUser) {
+  const orgRows = await db().select().from(organizations).where(eq(organizations.id, user.organizationId)).limit(1);
+  const org = orgRows[0];
+  const values = await settingsService.getForOrg(user.organizationId);
+  return {
+    id: org?.id ?? user.organizationId,
+    organizationName: (values.clinic_name as string) ?? org?.name ?? "",
+    address: org?.address ?? null,
+    phone: org?.phone ?? null,
+    email: org?.email ?? null,
+    website: (values.website as string | null) ?? null,
+    defaultCurrency: (values.currency as string) ?? org?.currency ?? "IDR",
+  };
+}

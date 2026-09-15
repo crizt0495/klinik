@@ -43,6 +43,10 @@ export function datePeriodMonth(date = new Date()): string {
   return `${y}${m}`;
 }
 
+export function datePeriodYear(date = new Date()): string {
+  return String(date.getFullYear());
+}
+
 export function padSequence(seq: number, width = 6): string {
   return String(seq).padStart(width, "0");
 }

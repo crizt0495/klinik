@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { auditLogs, activityLogs } from "@/db/schema";
+import { auditLogs, activityLogs, users } from "@/db/schema";
 import type { SessionUser } from "@/lib/auth/session";
 
 export async function getRequestContext(): Promise<{ ip: string | null; userAgent: string | null }> {
@@ -82,4 +83,34 @@ export async function writeActivityLog(params: {
     entityId: params.entityId ?? null,
     meta: params.meta ?? undefined,
   });
+}
+
+export interface AuditLogFilters {
+  action?: string;
+  entityType?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export async function listAuditLogs(user: SessionUser, filters: AuditLogFilters = {}) {
+  const conditions = [eq(auditLogs.organizationId, user.organizationId)];
+  if (filters.action?.trim()) conditions.push(eq(auditLogs.action, filters.action.trim()));
+  if (filters.entityType?.trim()) conditions.push(eq(auditLogs.entityType, filters.entityType.trim()));
+  if (filters.dateFrom) conditions.push(sql`${auditLogs.createdAt} >= ${filters.dateFrom}`);
+  if (filters.dateTo) conditions.push(sql`${auditLogs.createdAt} <= ${`${filters.dateTo} 23:59:59`}`);
+  return db()
+    .select({
+      id: auditLogs.id,
+      action: auditLogs.action,
+      entityType: auditLogs.entityType,
+      entityId: auditLogs.entityId,
+      userName: sql<string>`coalesce(${users.fullName}, 'System')`,
+      ip: auditLogs.ipAddress,
+      createdAt: auditLogs.createdAt,
+    })
+    .from(auditLogs)
+    .leftJoin(users, eq(users.id, auditLogs.userId))
+    .where(and(...conditions))
+    .orderBy(desc(auditLogs.createdAt))
+    .limit(200);
 }
