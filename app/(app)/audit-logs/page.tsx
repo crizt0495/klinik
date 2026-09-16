@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getSessionUser, assertCan } from "@/lib/auth/guard";
 import { PageHeader } from "@/components/page-header";
 import { AuditLogsView } from "./audit-logs-view";
 import { listAuditLogs } from "@/lib/services/audit";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Calendar, Filter, Table } from "lucide-react";
 
 export const metadata: Metadata = { title: "Audit Logs" };
 
@@ -15,11 +20,38 @@ export default async function AuditLogsPage({ searchParams }: { searchParams: Pr
     <div className="space-y-4">
       <PageHeader title="Audit Logs" description="Log aktivitas sistem untuk keamanan dan kepatuhan." />
       <form method="GET" className="flex flex-wrap items-end gap-3">
-        <div className="space-y-1.5"><label className="text-xs text-muted-foreground">Aksi</label><input name="action" defaultValue={action || ""} placeholder="e.g. LOGIN" className="flex h-9 rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm" /></div>
-        <div className="space-y-1.5"><label className="text-xs text-muted-foreground">Tipe Entitas</label><input name="entityType" defaultValue={entityType || ""} placeholder="e.g. patients" className="flex h-9 rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm" /></div>
-        <div className="space-y-1.5"><label className="text-xs text-muted-foreground">Dari</label><input type="date" name="from" defaultValue={from || ""} className="flex h-9 rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm" /></div>
-        <div className="space-y-1.5"><label className="text-xs text-muted-foreground">Sampai</label><input type="date" name="to" defaultValue={to || ""} className="flex h-9 rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm" /></div>
-        <button type="submit" className="inline-flex h-9 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90">Filter</button>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Aksi</Label>
+          <div className="relative">
+            <Filter className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input name="action" defaultValue={action || ""} placeholder="e.g. LOGIN" className="pl-8" />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Tipe Entitas</Label>
+          <div className="relative">
+            <Table className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input name="entityType" defaultValue={entityType || ""} placeholder="e.g. patients" className="pl-8" />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Dari</Label>
+          <div className="relative">
+            <Calendar className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input type="date" name="from" defaultValue={from || ""} className="pl-8" />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Sampai</Label>
+          <div className="relative">
+            <Calendar className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input type="date" name="to" defaultValue={to || ""} className="pl-8" />
+          </div>
+        </div>
+        <Button type="submit">Filter</Button>
+        <Button variant="outline" asChild>
+          <Link href="/audit-logs">Reset</Link>
+        </Button>
       </form>
       <AuditLogsView logs={logs} />
     </div>

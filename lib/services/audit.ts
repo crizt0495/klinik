@@ -106,6 +106,8 @@ export async function listAuditLogs(user: SessionUser, filters: AuditLogFilters 
       entityId: auditLogs.entityId,
       userName: sql<string>`coalesce(${users.fullName}, 'System')`,
       ip: auditLogs.ipAddress,
+      oldData: auditLogs.oldData,
+      newData: auditLogs.newData,
       createdAt: auditLogs.createdAt,
     })
     .from(auditLogs)

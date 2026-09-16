@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Users, CalendarDays, ListOrdered, Stethoscope, AlertTriangle, Pill, FlaskConical, ScanLine, TrendingUp } from "lucide-react";
 import { getSessionUser } from "@/lib/auth/guard";
-import { getDashboardStats } from "@/features/dashboard/queries";
+import { getDashboardStats, getDashboardTrend } from "@/features/dashboard/queries";
+import { RevenueChart } from "@/features/dashboard/revenue-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
 import { formatIDR, timeAgo, formatDateTime } from "@/lib/utils";
@@ -17,6 +18,8 @@ export default async function DashboardPage() {
   const showFinance = can(user, "billing.view") || can(user, "payments.view");
   const showPharmacy = can(user, "pharmacy.view");
   const showClinical = can(user, "queue.view") || can(user, "medical_records.view");
+
+  const trend = showFinance ? await getDashboardTrend(user) : null;
 
   return (
     <div className="space-y-6">
@@ -48,6 +51,8 @@ export default async function DashboardPage() {
               </CardContent>
             </Card>
           ) : null}
+
+          {trend ? <RevenueChart data={trend} /> : null}
 
           {showClinical ? (
             <Card>

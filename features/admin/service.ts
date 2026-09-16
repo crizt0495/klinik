@@ -35,6 +35,28 @@ export async function listRoles(user: SessionUser) {
   return db().select().from(s.roles).where(eq(s.roles.organizationId, user.organizationId)).orderBy(asc(s.roles.name));
 }
 
+export async function listPermissions(user: SessionUser) {
+  return db().select({ id: s.permissions.id, code: s.permissions.code, module: s.permissions.module }).from(s.permissions).orderBy(asc(s.permissions.code));
+}
+
+export async function createRole(user: SessionUser, data: { name: string; description?: string }) {
+  const name = data.name.trim();
+  if (!name) throw new ConflictError("Nama role tidak boleh kosong");
+  const existing = await db().select({ id: s.roles.id }).from(s.roles).where(and(eq(s.roles.organizationId, user.organizationId), eq(s.roles.name, name))).limit(1);
+  if (existing.length > 0) throw new ConflictError(`Role "${name}" sudah ada`);
+  const existingCodes = await db().select({ code: s.roles.code }).from(s.roles).where(eq(s.roles.organizationId, user.organizationId));
+  const usedCodes = new Set(existingCodes.map((r) => r.code));
+  let code = name.toUpperCase().replace(/\s+/g, "_");
+  if (usedCodes.has(code)) {
+    let suffix = 2;
+    while (usedCodes.has(`${code}_${suffix}`)) suffix++;
+    code = `${code}_${suffix}`;
+  }
+  const [created] = await db().insert(s.roles).values({ organizationId: user.organizationId, code, name, description: data.description ?? null, isSystem: false }).returning();
+  await writeAuditLog({ user, action: "CREATE", entityType: "roles", entityId: created.id, newData: { code, name, description: data.description ?? null } });
+  return created;
+}
+
 export async function getRolePermissions(roleId: string) {
   return db().select({ permissionId: s.rolePermissions.permissionId }).from(s.rolePermissions).where(eq(s.rolePermissions.roleId, roleId));
 }

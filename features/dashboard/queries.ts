@@ -4,6 +4,39 @@ import * as s from "@/db/schema";
 import type { SessionUser } from "@/lib/auth/session";
 import { todayISO } from "@/lib/utils";
 
+export async function getDashboardTrend(user: SessionUser, months = 6): Promise<Array<{ month: string; label: string; revenue: number; visits: number }>> {
+  const orgId = user.organizationId;
+  const now = new Date();
+  const rows: Array<{ month: string; label: string; revenue: number; visits: number }> = [];
+
+  for (let i = months - 1; i >= 0; i--) {
+    const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const next = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+    const month = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}`;
+    const label = new Date(start.getFullYear(), start.getMonth(), 1).toLocaleDateString("id-ID", { month: "short", year: "numeric" });
+
+    const [revenueRow, visitsRow] = await Promise.all([
+      db()
+        .select({ total: sum(sql`${s.payments.amount}::numeric`) })
+        .from(s.payments)
+        .where(and(eq(s.payments.organizationId, orgId), eq(s.payments.status, "COMPLETED"), gte(s.payments.paymentDate, start), lt(s.payments.paymentDate, next))),
+      db()
+        .select({ c: count() })
+        .from(s.visits)
+        .where(and(eq(s.visits.organizationId, orgId), gte(s.visits.visitDate, `${month}-01`), lt(s.visits.visitDate, `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-01`))),
+    ]);
+
+    rows.push({
+      month,
+      label,
+      revenue: Number(revenueRow[0]?.total ?? 0),
+      visits: visitsRow[0]?.c ?? 0,
+    });
+  }
+
+  return rows;
+}
+
 export interface DashboardStats {
   totalPatients: number;
   todayVisits: number;

@@ -1,4 +1,4 @@
-import { and, eq, sql, desc } from "drizzle-orm";
+import { and, eq, sql, desc, asc } from "drizzle-orm";
 import { db } from "@/db";
 import * as s from "@/db/schema";
 import type { SessionUser } from "@/lib/auth/session";
@@ -70,6 +70,61 @@ export async function listRadiologyOrders(user: SessionUser) {
     .innerJoin(s.patients, eq(s.patients.id, s.visits.patientId))
     .where(eq(s.radiologyOrders.organizationId, user.organizationId))
     .orderBy(desc(s.radiologyOrders.createdAt));
+}
+
+export async function getLabOrder(user: SessionUser, id: string) {
+  const rows = await db()
+    .select({
+      id: s.laboratoryOrders.id,
+      orderNumber: s.laboratoryOrders.orderNumber,
+      status: s.laboratoryOrders.status,
+      priority: s.laboratoryOrders.priority,
+      clinicalNote: s.laboratoryOrders.clinicalNote,
+      orderedAt: s.laboratoryOrders.orderedAt,
+      completedAt: s.laboratoryOrders.completedAt,
+      createdAt: s.laboratoryOrders.createdAt,
+      visitNumber: s.visits.visitNumber,
+      patientName: s.patients.fullName,
+      patientMrn: s.patients.medicalRecordNumber,
+    })
+    .from(s.laboratoryOrders)
+    .innerJoin(s.visits, eq(s.visits.id, s.laboratoryOrders.visitId))
+    .innerJoin(s.patients, eq(s.patients.id, s.visits.patientId))
+    .where(and(eq(s.laboratoryOrders.id, id), eq(s.laboratoryOrders.organizationId, user.organizationId)))
+    .limit(1);
+  const order = rows[0];
+  if (!order) throw new NotFoundError("Order lab tidak ditemukan");
+  const items = await db()
+    .select()
+    .from(s.laboratoryOrderItems)
+    .where(eq(s.laboratoryOrderItems.laboratoryOrderId, id))
+    .orderBy(asc(s.laboratoryOrderItems.createdAt));
+  return { order, items, patientName: order.patientName, patientMrn: order.patientMrn, visitNumber: order.visitNumber };
+}
+
+export async function getRadiologyOrder(user: SessionUser, id: string) {
+  const rows = await db()
+    .select({
+      id: s.radiologyOrders.id,
+      orderNumber: s.radiologyOrders.orderNumber,
+      procedureName: s.radiologyOrders.procedureName,
+      clinicalInformation: s.radiologyOrders.clinicalInformation,
+      status: s.radiologyOrders.status,
+      orderedAt: s.radiologyOrders.orderedAt,
+      completedAt: s.radiologyOrders.completedAt,
+      createdAt: s.radiologyOrders.createdAt,
+      visitNumber: s.visits.visitNumber,
+      patientName: s.patients.fullName,
+      patientMrn: s.patients.medicalRecordNumber,
+    })
+    .from(s.radiologyOrders)
+    .innerJoin(s.visits, eq(s.visits.id, s.radiologyOrders.visitId))
+    .innerJoin(s.patients, eq(s.patients.id, s.visits.patientId))
+    .where(and(eq(s.radiologyOrders.id, id), eq(s.radiologyOrders.organizationId, user.organizationId)))
+    .limit(1);
+  const order = rows[0];
+  if (!order) throw new NotFoundError("Order radiologi tidak ditemukan");
+  return { order, patientName: order.patientName, patientMrn: order.patientMrn, visitNumber: order.visitNumber };
 }
 
 export async function createRadiologyOrder(user: SessionUser, data: { visitId: string; images: Array<{ examType: string; bodyPart: string; clinicalInfo?: string; modality?: string }> }) {
