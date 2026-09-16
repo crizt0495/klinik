@@ -80,7 +80,7 @@ export async function globalSearchAction(query: string, limit = 6): Promise<Sear
       .from(suppliers)
       .where(and(eq(suppliers.organizationId, user.organizationId), or(ilike(suppliers.name, pattern), ilike(suppliers.code, pattern))))
       .limit(limit);
-    results.push(...s.map((r) => ({ type: "Supplier", label: r.name, sublabel: r.code, href: `/purchases?supplier=${r.id}` })));
+    results.push(...s.map((r) => ({ type: "Supplier", label: r.name, sublabel: r.code, href: `/purchasing?supplier=${r.id}` })));
   }
 
   const priorityOrder: Record<string, number> = { Pasien: 0, Dokter: 1, "Rekam Medis": 2, Invoice: 3, Resep: 4, Obat: 5 };

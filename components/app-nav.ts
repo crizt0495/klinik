@@ -72,7 +72,7 @@ export function getNavigation(user: { permissions: Set<string>; isSuperAdmin: bo
         { title: "Inventori", href: "/inventory", icon: "package", permission: "inventory.view" },
         { title: "Batch & Kadaluarsa", href: "/inventory/batches", icon: "package-search", permission: "inventory.view" },
         { title: "Stock Opname", href: "/inventory/stock-opname", icon: "folder-kanban", permission: "inventory.opname" },
-        { title: "Pembelian", href: "/purchases", icon: "truck", permission: "purchases.view" },
+        { title: "Pembelian", href: "/purchasing", icon: "truck", permission: "purchases.view" },
       ],
     },
     {
