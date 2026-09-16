@@ -175,7 +175,7 @@ export async function addProceduresAction(_prev: ActionState, fd: FormData): Pro
 
 export async function addVitalSignsAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   try {
-    const user = await getActionUser("queue.update");
+    const user = await getActionUser("medical_records.create");
     const d = parse(vitalSignsSchema, fd);
     await svc.addVitalSigns(user, d.visitId, { temperature: d.temperature, systolic: d.systolic, diastolic: d.diastolic, heartRate: d.heartRate, respiratoryRate: d.respiratoryRate, oxygenSaturation: d.oxygenSaturation, weight: d.weight, height: d.height, painScale: d.painScale, notes: d.notes });
     revalidatePath(`/visits/${d.visitId}`);

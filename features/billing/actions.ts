@@ -25,7 +25,7 @@ export async function createInvoiceAction(_prev: ActionState, fd: FormData): Pro
 
 export async function processPaymentAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   try {
-    const user = await getActionUser("billing.process_payment");
+    const user = await getActionUser("payments.create");
     const input = parseZod(paymentSchema, Object.fromEntries(fd));
     await processPayment(user, input);
     revalidatePath("/billing");
@@ -35,7 +35,7 @@ export async function processPaymentAction(_prev: ActionState, fd: FormData): Pr
 
 export async function processRefundAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   try {
-    const user = await getActionUser("billing.process_refund");
+    const user = await getActionUser("payments.refund");
     const input = parseZod(refundSchema, Object.fromEntries(fd));
     await processRefund(user, input);
     revalidatePath("/billing");

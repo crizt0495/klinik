@@ -139,6 +139,8 @@ export async function runSeed(): Promise<void> {
       { organizationId, branchId, medicalRecordNumber: "MR-2026-000004", nik: "3171040404980004", fullName: "Ratna Dewi", birthDate: "1998-04-04", gender: "FEMALE", phone: "08123456704", status: "ACTIVE" },
     ]);
 
+  await db.insert(schema.counters).values({ organizationId, branchId, scope: "MRN", period: String(new Date().getFullYear()), sequence: 4 }).onConflictDoNothing();
+
   const categories = await db.insert(schema.medicationCategories).values([{ organizationId, name: "Analgesik", status: "ACTIVE" }, { organizationId, name: "Antibiotik", status: "ACTIVE" }, { organizationId, name: "Vitamin", status: "ACTIVE" }]).returning();
 
   const meds = await db

@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Peran" };
 
 export default async function RolesPage() {
   const user = await getSessionUser();
-  assertCan(user, "settings.manage");
+  assertCan(user, "roles.view");
   const roles = await listRoles(user);
   return (
     <div className="space-y-4">

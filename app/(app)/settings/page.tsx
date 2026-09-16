@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Pengaturan" };
 
 export default async function SettingsPage() {
   const user = await getSessionUser();
-  assertCan(user, "settings.manage");
+  assertCan(user, "settings.view");
   const settings = await getOrganizationSettings(user);
   return (
     <div className="space-y-4">

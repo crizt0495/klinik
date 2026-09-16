@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Laboratorium" };
 
 export default async function LabPage() {
   const user = await getSessionUser();
-  assertCan(user, "lab.view");
+  assertCan(user, "laboratory.view");
   const orders = await listLabOrders(user);
   return (
     <div className="space-y-4">

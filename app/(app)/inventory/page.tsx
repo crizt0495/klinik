@@ -14,8 +14,9 @@ export const metadata: Metadata = { title: "Inventori" };
 
 export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const user = await getSessionUser();
-  const canManage = user.isSuperAdmin || user.permissions.has("inventory.manage");
-  const canPurchase = user.isSuperAdmin || user.permissions.has("purchasing.create");
+  assertCan(user, "inventory.view");
+  const canManage = user.isSuperAdmin || user.permissions.has("inventory.opname");
+  const canPurchase = user.isSuperAdmin || user.permissions.has("purchases.view");
   const inventory = await listInventory(user);
   const poList = canPurchase ? await listPurchaseOrders(user) : [];
   let suppliers: Awaited<ReturnType<typeof listSuppliers>> = [];

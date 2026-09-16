@@ -1,3 +1,4 @@
+import { forbidden } from "next/navigation";
 import { getCurrentSessionUser, type SessionUser } from "@/lib/auth/session";
 import { ForbiddenError } from "@/lib/errors";
 
@@ -36,7 +37,7 @@ export async function requirePermissionOrThrow(user: SessionUser, permission: st
 
 export function assertCan(user: SessionUser, permission: string): void {
   if (!user.isSuperAdmin && !user.permissions.has(permission)) {
-    throw new ForbiddenError(`Anda tidak memiliki izin: ${permission}`);
+    forbidden();
   }
 }
 

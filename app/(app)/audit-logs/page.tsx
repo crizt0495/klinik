@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Audit Logs" };
 
 export default async function AuditLogsPage({ searchParams }: { searchParams: Promise<{ action?: string; entityType?: string; from?: string; to?: string }> }) {
   const user = await getSessionUser();
-  assertCan(user, "settings.manage");
+  assertCan(user, "audit_logs.view");
   const { action, entityType, from, to } = await searchParams;
   const logs = await listAuditLogs(user, { action, entityType, dateFrom: from, dateTo: to });
   return (

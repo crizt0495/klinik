@@ -12,7 +12,7 @@ interface Props { params: Promise<{ id: string }> }
 export default async function PurchaseOrderDetailPage({ params }: Props) {
   const { id } = await params;
   const user = await getSessionUser();
-  assertCan(user, "purchasing.view");
+  assertCan(user, "purchases.view");
 
   let data;
   try { data = await getPurchaseOrder(user, id); } catch { notFound(); }

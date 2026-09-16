@@ -29,5 +29,5 @@ export async function getMonthlyRevenue(user: SessionUser, year: number) {
     month: sql<string>`to_char(payments.payment_date, 'YYYY-MM')`,
     total: sql<string>`coalesce(sum(payments.amount::numeric), 0)::text`,
     count: sql<number>`count(*)::int`,
-  }).from(s.payments).where(and(eq(s.payments.organizationId, user.organizationId), eq(s.payments.status, "COMPLETED"), sql`extract(year from payments.payment_date) = ${year}`)).groupBy(sql`to_char(payments.paid_at, 'YYYY-MM')`).orderBy(sql`to_char(payments.paid_at, 'YYYY-MM')`);
+  }).from(s.payments).where(and(eq(s.payments.organizationId, user.organizationId), eq(s.payments.status, "COMPLETED"), sql`extract(year from payments.payment_date) = ${year}`)).groupBy(sql`to_char(payments.payment_date, 'YYYY-MM')`).orderBy(sql`to_char(payments.payment_date, 'YYYY-MM')`);
 }

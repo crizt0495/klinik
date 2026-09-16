@@ -37,8 +37,9 @@ export async function createQueueEntryAction(_prev: ActionState, fd: FormData): 
 
 export async function updateQueueStatusAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   try {
-    const user = await getActionUser("queue.update");
     const data = parse(statusSchema, fd);
+    const perm = data.status === "CALLED" || data.status === "SERVING" ? "queue.call" : data.status === "COMPLETED" ? "queue.complete" : "queue.skip";
+    const user = await getActionUser(perm);
     await updateQueueStatus(user, data.queueId, data.status);
     revalidatePath("/queue");
     return { success: true };

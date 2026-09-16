@@ -14,7 +14,7 @@ const radOrderSchema = z.object({ visitId: z.string().min(1), images: z.array(ra
 
 export async function createLabOrderAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   try {
-    const user = await getActionUser("lab.request");
+    const user = await getActionUser("laboratory.create");
     const input = parseZod(labOrderSchema, JSON.parse(String(fd.get("payload") ?? "{}")));
     await createLabOrder(user, input);
     revalidatePath("/lab");
@@ -25,7 +25,7 @@ export async function createLabOrderAction(_prev: ActionState, fd: FormData): Pr
 
 export async function completeLabOrderAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   try {
-    const user = await getActionUser("lab.result");
+    const user = await getActionUser("laboratory.process");
     const labOrderId = String(fd.get("labOrderId"));
     const results = JSON.parse(String(fd.get("results") ?? "[]"));
     await completeLabOrder(user, labOrderId, results);
@@ -36,7 +36,7 @@ export async function completeLabOrderAction(_prev: ActionState, fd: FormData): 
 
 export async function createRadiologyOrderAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   try {
-    const user = await getActionUser("radiology.request");
+    const user = await getActionUser("radiology.create");
     const input = parseZod(radOrderSchema, JSON.parse(String(fd.get("payload") ?? "{}")));
     await createRadiologyOrder(user, input);
     revalidatePath("/radiology");

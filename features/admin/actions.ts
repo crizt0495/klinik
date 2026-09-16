@@ -11,7 +11,7 @@ const createUserSchema = z.object({ username: z.string().min(3).max(50), fullNam
 
 export async function createUserAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   try {
-    const user = await getActionUser("settings.manage");
+    const user = await getActionUser("users.create");
     const input = parseZod(createUserSchema, Object.fromEntries(fd));
     await createUser(user, input);
     revalidatePath("/admin/users");
@@ -21,7 +21,7 @@ export async function createUserAction(_prev: ActionState, fd: FormData): Promis
 
 export async function assignRolePermissionsAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   try {
-    const user = await getActionUser("settings.manage");
+    const user = await getActionUser("roles.manage");
     const roleId = String(fd.get("roleId"));
     const permissionIds = JSON.parse(String(fd.get("permissionIds") ?? "[]")) as string[];
     await assignRolePermissions(user, roleId, permissionIds);
@@ -32,7 +32,7 @@ export async function assignRolePermissionsAction(_prev: ActionState, fd: FormDa
 
 export async function assignUserRoleAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   try {
-    const user = await getActionUser("settings.manage");
+    const user = await getActionUser("users.update");
     const userId = String(fd.get("userId"));
     const roleIds = JSON.parse(String(fd.get("roleIds") ?? "[]")) as string[];
     await assignUserRole(user, userId, roleIds);

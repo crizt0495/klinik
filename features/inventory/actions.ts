@@ -13,7 +13,7 @@ const poSchema = z.object({ supplierId: z.string().min(1), expectedDate: z.strin
 
 export async function stockOpnameAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   try {
-    const user = await getActionUser("inventory.manage");
+    const user = await getActionUser("inventory.opname");
     const input = parseZod(opnameSchema, Object.fromEntries(fd));
     await createStockOpname(user, input.medicationId, input.batchId, input.countedQuantity, input.notes);
     revalidatePath("/inventory");
@@ -23,7 +23,7 @@ export async function stockOpnameAction(_prev: ActionState, fd: FormData): Promi
 
 export async function createPurchaseOrderAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   try {
-    const user = await getActionUser("purchasing.create");
+    const user = await getActionUser("purchases.create");
     const raw = JSON.parse(String(fd.get("payload") ?? "{}"));
     const input = parseZod(poSchema, raw);
     await createPurchaseOrder(user, input);
@@ -35,7 +35,7 @@ export async function createPurchaseOrderAction(_prev: ActionState, fd: FormData
 
 export async function receivePurchaseOrderAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   try {
-    const user = await getActionUser("purchasing.receive");
+    const user = await getActionUser("purchases.receive");
     const purchaseOrderId = String(fd.get("purchaseOrderId"));
     const received = JSON.parse(String(fd.get("received") ?? "[]")) as Array<{ itemId: string; quantityReceived: number }>;
     await receivePurchaseOrder(user, purchaseOrderId, received);
