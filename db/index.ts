@@ -33,8 +33,9 @@ function globalPgInstance(): PGlite | null {
 }
 
 export function resolveDriver(): Driver {
-  if (process.env.DB_DRIVER === "pglite") return "pglite";
-  if (!process.env.DATABASE_URL) return "pglite";
+  if (process.env.DB_DRIVER === "pglite" && process.env.NODE_ENV !== "production") return "pglite";
+  if (!process.env.DATABASE_URL && process.env.NODE_ENV !== "production") return "pglite";
+  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not configured (production requires a PostgreSQL URL)");
   return "neon-http";
 }
 
