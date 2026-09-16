@@ -34,13 +34,13 @@ function globalPgInstance(): PGlite | null {
 
 export function resolveDriver(): Driver {
   if (process.env.DB_DRIVER === "pglite" && process.env.NODE_ENV !== "production") return "pglite";
-  if (!process.env.DATABASE_URL && process.env.NODE_ENV !== "production") return "pglite";
-  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not configured (production requires a PostgreSQL URL)");
+  if (!process.env.DATABASE_URL && !process.env.DATABASE_URL_PLAIN && process.env.NODE_ENV !== "production") return "pglite";
+  if (!process.env.DATABASE_URL && !process.env.DATABASE_URL_PLAIN) throw new Error("DATABASE_URL is not configured (production requires a PostgreSQL URL)");
   return "neon-http";
 }
 
 export function getConnectionString(): string {
-  return process.env.DATABASE_URL ?? "";
+  return process.env.DATABASE_URL ?? process.env.DATABASE_URL_PLAIN ?? "";
 }
 
 export function getDb() {
