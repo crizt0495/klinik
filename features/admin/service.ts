@@ -20,6 +20,24 @@ export async function listUsers(user: SessionUser) {
     .orderBy(asc(s.users.username));
 }
 
+export async function listStaff(user: SessionUser) {
+  return db()
+    .select({
+      id: s.staff.id,
+      employeeNumber: s.staff.employeeNumber,
+      fullName: s.staff.fullName,
+      phone: s.staff.phone,
+      email: s.staff.email,
+      staffType: s.staff.staffType,
+      status: s.staff.status,
+      username: s.users.username,
+    })
+    .from(s.staff)
+    .leftJoin(s.users, eq(s.users.id, s.staff.userId))
+    .where(eq(s.staff.organizationId, user.organizationId))
+    .orderBy(asc(s.staff.fullName));
+}
+
 export async function createUser(user: SessionUser, data: { username: string; fullName: string; email?: string; password: string }) {
   const existing = await db().select().from(s.users).where(and(eq(s.users.username, data.username), eq(s.users.organizationId, user.organizationId))).limit(1);
   if (existing.length > 0) throw new ConflictError(`Username "${data.username}" sudah ada`);

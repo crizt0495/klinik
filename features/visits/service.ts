@@ -182,6 +182,27 @@ export async function cancelVisit(user: SessionUser, id: string) {
 }
 
 // Medical Records
+export async function listMedicalRecords(user: SessionUser) {
+  return db()
+    .select({
+      id: s.medicalRecords.id,
+      visitId: s.medicalRecords.visitId,
+      patientName: s.patients.fullName,
+      patientMrn: s.patients.medicalRecordNumber,
+      doctorName: s.staff.fullName,
+      status: s.medicalRecords.status,
+      finalizedAt: s.medicalRecords.finalizedAt,
+      updatedAt: s.medicalRecords.updatedAt,
+      createdAt: s.medicalRecords.createdAt,
+    })
+    .from(s.medicalRecords)
+    .innerJoin(s.patients, eq(s.patients.id, s.medicalRecords.patientId))
+    .leftJoin(s.doctors, eq(s.doctors.id, s.medicalRecords.doctorId))
+    .leftJoin(s.staff, eq(s.staff.id, s.doctors.staffId))
+    .where(eq(s.medicalRecords.organizationId, user.organizationId))
+    .orderBy(desc(s.medicalRecords.updatedAt));
+}
+
 export async function getMedicalRecord(user: SessionUser, visitId: string) {
   const rows = await db().select().from(s.medicalRecords).where(eq(s.medicalRecords.visitId, visitId)).limit(1);
   return rows[0] ?? null;

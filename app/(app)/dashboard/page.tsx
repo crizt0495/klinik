@@ -118,7 +118,7 @@ export default async function DashboardPage() {
                   <span className="flex items-center gap-2 text-muted-foreground">
                     <FlaskConical className="h-4 w-4" /> Laboratorium
                   </span>
-                  <Link href="/laboratory" className="nums font-medium text-primary hover:underline">{stats.pendingLab}</Link>
+                  <Link href="/lab" className="nums font-medium text-primary hover:underline">{stats.pendingLab}</Link>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-muted-foreground">

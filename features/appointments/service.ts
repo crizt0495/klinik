@@ -15,6 +15,30 @@ export async function listDoctors(user: SessionUser) {
     .orderBy(s.staff.fullName);
 }
 
+export async function listDoctorSchedules(user: SessionUser) {
+  return db()
+    .select({
+      id: s.doctorSchedules.id,
+      doctorName: s.staff.fullName,
+      specialization: s.doctors.specialization,
+      departmentName: s.departments.name,
+      dayOfWeek: s.doctorSchedules.dayOfWeek,
+      startTime: s.doctorSchedules.startTime,
+      endTime: s.doctorSchedules.endTime,
+      slotDurationMinutes: s.doctorSchedules.slotDurationMinutes,
+      maxPatients: s.doctorSchedules.maxPatients,
+      effectiveFrom: s.doctorSchedules.effectiveFrom,
+      effectiveUntil: s.doctorSchedules.effectiveUntil,
+      status: s.doctorSchedules.status,
+    })
+    .from(s.doctorSchedules)
+    .innerJoin(s.doctors, eq(s.doctors.id, s.doctorSchedules.doctorId))
+    .innerJoin(s.staff, eq(s.staff.id, s.doctors.staffId))
+    .innerJoin(s.departments, eq(s.departments.id, s.doctorSchedules.departmentId))
+    .where(eq(s.doctorSchedules.organizationId, user.organizationId))
+    .orderBy(s.doctorSchedules.dayOfWeek, s.doctorSchedules.startTime);
+}
+
 export async function listDepartments(user: SessionUser) {
   return db()
     .select()

@@ -1,4 +1,4 @@
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq, desc, sql } from "drizzle-orm";
 import { db } from "@/db";
 import * as s from "@/db/schema";
 import type { SessionUser } from "@/lib/auth/session";
@@ -122,4 +122,47 @@ export async function listPayments(user: SessionUser, invoiceId?: string) {
   const conditions = [eq(s.payments.organizationId, user.organizationId)];
   if (invoiceId) conditions.push(eq(s.payments.invoiceId, invoiceId));
   return db().select().from(s.payments).where(and(...conditions)).orderBy(desc(s.payments.paymentDate));
+}
+
+export async function listPaymentsDetailed(user: SessionUser) {
+  return db()
+    .select({
+      id: s.payments.id,
+      paymentNumber: s.payments.paymentNumber,
+      paymentDate: s.payments.paymentDate,
+      amount: s.payments.amount,
+      paymentMethod: s.payments.paymentMethod,
+      referenceNumber: s.payments.referenceNumber,
+      status: s.payments.status,
+      invoiceId: s.payments.invoiceId,
+      invoiceNumber: s.invoices.invoiceNumber,
+      patientName: s.patients.fullName,
+      patientMrn: s.patients.medicalRecordNumber,
+    })
+    .from(s.payments)
+    .leftJoin(s.invoices, eq(s.invoices.id, s.payments.invoiceId))
+    .leftJoin(s.patients, eq(s.patients.id, s.invoices.patientId))
+    .where(and(eq(s.payments.organizationId, user.organizationId), sql`${s.payments.paymentMethod} <> 'REFUND'`))
+    .orderBy(desc(s.payments.paymentDate));
+}
+
+export async function listRefunds(user: SessionUser) {
+  return db()
+    .select({
+      id: s.payments.id,
+      refundNumber: s.payments.paymentNumber,
+      refundDate: s.payments.paymentDate,
+      amount: s.payments.amount,
+      reason: s.payments.referenceNumber,
+      status: s.payments.status,
+      invoiceId: s.payments.invoiceId,
+      invoiceNumber: s.invoices.invoiceNumber,
+      patientName: s.patients.fullName,
+      patientMrn: s.patients.medicalRecordNumber,
+    })
+    .from(s.payments)
+    .leftJoin(s.invoices, eq(s.invoices.id, s.payments.invoiceId))
+    .leftJoin(s.patients, eq(s.patients.id, s.invoices.patientId))
+    .where(and(eq(s.payments.organizationId, user.organizationId), eq(s.payments.paymentMethod, "REFUND")))
+    .orderBy(desc(s.payments.paymentDate));
 }

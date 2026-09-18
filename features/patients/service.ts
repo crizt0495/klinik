@@ -93,6 +93,14 @@ export async function getPatientDetail(user: SessionUser, id: string) {
   return { patient, insurance, contacts, providers };
 }
 
+export async function listInsuranceProviders(user: SessionUser) {
+  return db()
+    .select()
+    .from(s.insuranceProviders)
+    .where(eq(s.insuranceProviders.organizationId, user.organizationId))
+    .orderBy(s.insuranceProviders.name);
+}
+
 export async function createPatient(user: SessionUser, input: PatientInput) {
   const nik = input.nik?.trim() || null;
   if (nik) {

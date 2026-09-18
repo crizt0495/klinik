@@ -78,7 +78,7 @@ export function getNavigation(user: { permissions: Set<string>; isSuperAdmin: bo
     {
       title: "Diagnostik",
       items: [
-        { title: "Laboratorium", href: "/laboratory", icon: "flask-conical", permission: "laboratory.view" },
+        { title: "Laboratorium", href: "/lab", icon: "flask-conical", permission: "laboratory.view" },
         { title: "Radiologi", href: "/radiology", icon: "scan-line", permission: "radiology.view" },
       ],
     },
@@ -98,8 +98,8 @@ export function getNavigation(user: { permissions: Set<string>; isSuperAdmin: bo
     {
       title: "Administrasi",
       items: [
-        { title: "Pengguna", href: "/users", icon: "users", permission: "users.view" },
-        { title: "Peran & Izin", href: "/roles", icon: "shield-check", permission: "roles.view" },
+        { title: "Pengguna", href: "/admin/users", icon: "users", permission: "users.view" },
+        { title: "Peran & Izin", href: "/admin/roles", icon: "shield-check", permission: "roles.view" },
         { title: "Pengaturan", href: "/settings", icon: "settings", permission: "settings.view" },
         { title: "Audit Log", href: "/audit-logs", icon: "history", permission: "audit_logs.view" },
       ],
