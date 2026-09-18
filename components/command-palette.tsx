@@ -90,10 +90,10 @@ export function CommandPalette({ open: openProp, onOpenChange }: { open: boolean
         <CommandEmpty>{searching ? "Mencari..." : "Tidak ditemukan."}</CommandEmpty>
         {query.length < 2 ? (
           <CommandGroup heading="Tindakan cepat">
-            <CommandItem onSelect={() => go("/patients/new")}>
+            <CommandItem onSelect={() => go("/patients")}>
               <UserPlus className="h-4 w-4" /> Buat pasien baru
             </CommandItem>
-            <CommandItem onSelect={() => go("/appointments/new")}>
+            <CommandItem onSelect={() => go("/appointments")}>
               <CalendarPlus className="h-4 w-4" /> Buat appointment
             </CommandItem>
             <CommandItem onSelect={() => go("/queue")}>

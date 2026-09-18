@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Resep" };
 
 export default async function PrescriptionsPage() {
   const user = await getSessionUser();
-  assertCan(user, "medical_records.view");
+  assertCan(user, "prescriptions.view");
   const prescriptions = await listPrescriptions(user);
   const details = await Promise.all(
     prescriptions.slice(0, 30).map(async (p) => {

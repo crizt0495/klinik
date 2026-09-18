@@ -35,7 +35,7 @@ export async function globalSearchAction(query: string, limit = 6): Promise<Sear
       .innerJoin(staff, eq(staff.id, doctors.staffId))
       .where(and(eq(doctors.organizationId, user.organizationId), ilike(staff.fullName, pattern)))
       .limit(limit);
-    results.push(...d.map((r) => ({ type: "Dokter", label: r.name, sublabel: r.spec ?? "Dokter", href: `/doctors/${r.id}` })));
+    results.push(...d.map((r) => ({ type: "Dokter", label: r.name, sublabel: r.spec ?? "Dokter", href: `/doctors` })));
   }
 
   if (user.isSuperAdmin || user.permissions.has("appointments.view")) {
@@ -44,7 +44,7 @@ export async function globalSearchAction(query: string, limit = 6): Promise<Sear
       .from(appointments)
       .where(and(eq(appointments.organizationId, user.organizationId), ilike(appointments.appointmentNumber, pattern)))
       .limit(limit);
-    results.push(...a.map((r) => ({ type: "Appointment", label: r.number, sublabel: r.date, href: `/appointments/${r.id}` })));
+    results.push(...a.map((r) => ({ type: "Appointment", label: r.number, sublabel: r.date, href: `/appointments?date=${r.date}` })));
   }
 
   if (user.isSuperAdmin || user.permissions.has("pharmacy.view")) {
@@ -71,7 +71,7 @@ export async function globalSearchAction(query: string, limit = 6): Promise<Sear
       .from(prescriptions)
       .where(and(eq(prescriptions.organizationId, user.organizationId), ilike(prescriptions.prescriptionNumber, pattern)))
       .limit(limit);
-    results.push(...rx.map((r) => ({ type: "Resep", label: r.number, sublabel: r.status, href: `/prescriptions/${r.id}` })));
+    results.push(...rx.map((r) => ({ type: "Resep", label: r.number, sublabel: r.status, href: `/prescriptions` })));
   }
 
   if (user.isSuperAdmin || user.permissions.has("purchases.view")) {

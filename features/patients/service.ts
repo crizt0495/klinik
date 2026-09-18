@@ -180,22 +180,22 @@ export async function getPatientTimeline(user: SessionUser, patientId: string) {
 
   const args = and(eq(s.medicalRecords.patientId, patientId));
   const mrs = await db()
-    .select({ id: s.medicalRecords.id, date: s.medicalRecords.createdAt, status: s.medicalRecords.status })
+    .select({ id: s.medicalRecords.id, visitId: s.medicalRecords.visitId, date: s.medicalRecords.createdAt, status: s.medicalRecords.status })
     .from(s.medicalRecords)
     .where(args);
-  for (const m of mrs) events.push({ id: m.id, type: "Rekam Medis", title: m.status, sub: "Catatan medis", date: m.date, href: `/visits/${m.id}` });
+  for (const m of mrs) events.push({ id: m.id, type: "Rekam Medis", title: m.status, sub: "Catatan medis", date: m.date, href: `/visits/${m.visitId}` });
 
   const rxs = await db().select({ id: s.prescriptions.id, number: s.prescriptions.prescriptionNumber, date: s.prescriptions.createdAt, status: s.prescriptions.status }).from(s.prescriptions).where(eq(s.prescriptions.patientId, patientId));
-  for (const r of rxs) events.push({ id: r.id, type: "Resep", title: r.number, sub: `Status: ${r.status}`, date: r.date, href: `/prescriptions/${r.id}` });
+  for (const r of rxs) events.push({ id: r.id, type: "Resep", title: r.number, sub: `Status: ${r.status}`, date: r.date, href: `/prescriptions` });
 
   const invs = await db().select({ id: s.invoices.id, number: s.invoices.invoiceNumber, invoiceDate: s.invoices.invoiceDate, status: s.invoices.status }).from(s.invoices).where(eq(s.invoices.patientId, patientId));
   for (const i of invs) events.push({ id: i.id, type: "Penagihan", title: i.number, sub: `Status: ${i.status}`, date: new Date(`${i.invoiceDate}T00:00:00`), href: `/billing/${i.id}` });
 
   const labs = await db().select({ id: s.laboratoryOrders.id, number: s.laboratoryOrders.orderNumber, date: s.laboratoryOrders.createdAt, status: s.laboratoryOrders.status }).from(s.laboratoryOrders).where(eq(s.laboratoryOrders.patientId, patientId));
-  for (const l of labs) events.push({ id: l.id, type: "Laboratorium", title: l.number, sub: `Status: ${l.status}`, date: l.date, href: `/laboratory/${l.id}` });
+  for (const l of labs) events.push({ id: l.id, type: "Laboratorium", title: l.number, sub: `Status: ${l.status}`, date: l.date, href: `/lab` });
 
   const rads = await db().select({ id: s.radiologyOrders.id, number: s.radiologyOrders.orderNumber, date: s.radiologyOrders.createdAt, status: s.radiologyOrders.status }).from(s.radiologyOrders).where(eq(s.radiologyOrders.patientId, patientId));
-  for (const r of rads) events.push({ id: r.id, type: "Radiologi", title: r.number, sub: `Status: ${r.status}`, date: r.date, href: `/radiology/${r.id}` });
+  for (const r of rads) events.push({ id: r.id, type: "Radiologi", title: r.number, sub: `Status: ${r.status}`, date: r.date, href: `/radiology` });
 
   return events.sort((a, b) => b.date.getTime() - a.date.getTime());
 }
