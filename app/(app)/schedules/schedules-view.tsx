@@ -3,9 +3,12 @@
 import * as React from "react";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
-import { formatTime } from "@/lib/utils";
 
 const DAY_LABELS = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+
+function clock(value: string | null | undefined): string {
+  return value ? value.slice(0, 5) : "-";
+}
 
 export interface ScheduleRow {
   id: string;
@@ -39,7 +42,7 @@ export function SchedulesView({ schedules }: { schedules: ScheduleRow[] }) {
       header: "Jam",
       cell: (ctx) => (
         <span className="nums text-xs">
-          {formatTime(ctx.row.original.startTime)} - {formatTime(ctx.row.original.endTime)}
+          {clock(ctx.row.original.startTime)} - {clock(ctx.row.original.endTime)}
         </span>
       ),
     },
