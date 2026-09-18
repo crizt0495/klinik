@@ -254,7 +254,7 @@ export async function amendMedicalRecord(user: SessionUser, visitId: string, rea
   const latestVersion = await db().select({ v: sql<number>`COALESCE(MAX(${s.medicalRecordVersions.versionNumber}),0)` }).from(s.medicalRecordVersions).where(eq(s.medicalRecordVersions.medicalRecordId, mr.id));
   const currentVersion = latestVersion[0]?.v ?? 0;
   if (currentVersion > 0) {
-    await db().insert(s.medicalRecordVersions).values({ medicalRecordId: mr.id, versionNumber: currentVersion, subjective: mr.subjective, objective: mr.objective, assessment: mr.assessment, plan: mr.plan, changedBy: user.id, changeReason: reason });
+    await db().insert(s.medicalRecordVersions).values({ medicalRecordId: mr.id, versionNumber: currentVersion + 1, subjective: mr.subjective, objective: mr.objective, assessment: mr.assessment, plan: mr.plan, changedBy: user.id, changeReason: reason });
   }
   const updated = await db().update(s.medicalRecords).set({ ...input, status: "DRAFT", updatedAt: new Date() }).where(eq(s.medicalRecords.id, mr.id)).returning();
   await writeAuditLog({ user, action: "MR_AMEND", entityType: "medical_records", entityId: mr.id, oldData: { status: "FINALIZED" }, newData: { status: "DRAFT", reason } });
