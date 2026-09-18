@@ -17,12 +17,12 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
       <form method="GET" className="flex flex-wrap items-end gap-3">
         <div className="space-y-1.5">
           <label className="text-xs text-muted-foreground">Poli</label>
-          <select name="dept" defaultValue={dept || ""} className="flex h-9 rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm">
+          <select name="dept" defaultValue={dept || ""} className="flex h-9 rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
             <option value="">Semua Poli</option>
             {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
         </div>
-        <button type="submit" className="inline-flex h-9 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90">Filter</button>
+        <button type="submit" className="inline-flex h-9 items-center rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90">Filter</button>
       </form>
       <QueueView
         queues={queues}

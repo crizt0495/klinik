@@ -27,7 +27,7 @@ export function AppShell({ user, sections, unreadCount, children }: AppShellProp
 
   return (
     <div className="flex h-dvh overflow-hidden">
-      <div className="hidden h-full w-64 flex-col border-r bg-sidebar lg:flex">
+      <div className="hidden h-full w-64 flex-col border-r border-border/60 bg-sidebar lg:flex">
         <Brand collapsed={collapsed} />
         <SidebarNav sections={sections} collapsed={collapsed} />
       </div>
@@ -48,8 +48,8 @@ export function AppShell({ user, sections, unreadCount, children }: AppShellProp
           onOpenMenu={() => setMobileOpen(true)}
           onOpenCommand={() => setCommandOpen(true)}
         />
-        <main className="flex-1 overflow-y-auto scrollbar-thin">
-          <div className="mx-auto w-full max-w-7xl p-4 sm:p-6">{children}</div>
+        <main className="scrollbar-thin flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-[1440px] p-4 sm:p-6 lg:p-8">{children}</div>
         </main>
       </div>
 

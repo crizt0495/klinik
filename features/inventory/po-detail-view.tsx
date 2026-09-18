@@ -75,7 +75,7 @@ export function PODetailView({ po }: { po: PODetailData }) {
         </CardContent>
       </Card>
 
-      {state.error ? <p className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{state.error}</p> : null}
+      {state.error ? <p className="rounded-lg border border-destructive/20 bg-destructive/8 p-3 text-sm text-[color-mix(in_oklch,var(--destructive)_85%,black)] dark:text-destructive">{state.error}</p> : null}
 
       {canReceive && (
         <Button onClick={handleReceive} disabled={pending}>

@@ -94,13 +94,8 @@ export function DataTable<TData, TValue>({ columns, data, loading, searchable = 
         <div className="flex flex-1 items-center gap-2">
           {searchable ? (
             <div className="relative w-full max-w-sm">
-              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={searchPlaceholder}
-                value={globalFilter}
-                onChange={(e) => setGlobalFilter(e.target.value)}
-                className="pl-8"
-              />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
+              <Input placeholder={searchPlaceholder} value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} className="bg-muted/30 pl-9" />
             </div>
           ) : null}
         </div>
@@ -132,13 +127,13 @@ export function DataTable<TData, TValue>({ columns, data, loading, searchable = 
       </div>
 
       {loading ? (
-        <div className="space-y-2 rounded-md border p-4">
+        <div className="space-y-3 rounded-xl border border-border/70 bg-card p-5 shadow-card">
           {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-10 w-full" />
           ))}
         </div>
       ) : (
-        <div className="rounded-md border">
+        <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-card">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -170,7 +165,7 @@ export function DataTable<TData, TValue>({ columns, data, loading, searchable = 
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
-                    <EmptyState title={emptyTitle} description={emptyDescription} />
+                    <EmptyState title={emptyTitle} description={emptyDescription} className="border-0 bg-transparent py-10" />
                   </TableCell>
                 </TableRow>
               )}
@@ -180,8 +175,8 @@ export function DataTable<TData, TValue>({ columns, data, loading, searchable = 
       )}
 
       {!loading && table.getFilteredRowModel().rows.length > 0 ? (
-        <div className="flex items-center justify-between px-2">
-          <div className="text-xs text-muted-foreground">
+        <div className="flex items-center justify-between px-1 pt-1">
+          <div className="nums text-xs text-muted-foreground">
             Menampilkan {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}-
             {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)} dari {table.getFilteredRowModel().rows.length}
             {selectable ? ` (${Object.keys(rowSelection).length} dipilih)` : ""}

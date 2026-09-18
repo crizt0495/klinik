@@ -160,21 +160,21 @@ export function QueueView({ queues, options, canManage }: Props) {
             {addError ? <Alert variant="destructive"><AlertDescription>{addError}</AlertDescription></Alert> : null}
             <div className="space-y-1.5">
               <Label className="text-xs">Pasien</Label>
-              <select name="patientId" required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
+              <select name="patientId" required className="flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
                 <option value="">Pilih pasien...</option>
                 {options.patients.map((p) => <option key={p.id} value={p.id}>{p.fullName} · {p.medicalRecordNumber}</option>)}
               </select>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Poli</Label>
-              <select name="departmentId" required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
+              <select name="departmentId" required className="flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
                 <option value="">Pilih poli...</option>
                 {options.departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Prioritas</Label>
-              <select name="priority" defaultValue="NORMAL" className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
+              <select name="priority" defaultValue="NORMAL" className="flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
                 <option value="NORMAL">Normal</option>
                 <option value="PRIORITY">Prioritas</option>
                 <option value="EMERGENCY">Gawat Darurat</option>

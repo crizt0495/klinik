@@ -2,13 +2,13 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-const alertVariants = cva("relative w-full rounded-lg border px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground", {
+const alertVariants = cva("relative w-full rounded-xl border px-4 py-3 text-sm shadow-2xs [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg~*]:pl-7", {
   variants: {
     variant: {
-      default: "bg-card text-card-foreground",
-      destructive: "border-destructive/50 text-destructive [&>svg]:text-destructive",
-      success: "border-success/50 text-success [&>svg]:text-success",
-      warning: "border-warning/50 text-warning [&>svg]:text-warning",
+      default: "border-border/70 bg-card text-card-foreground [&>svg]:text-muted-foreground",
+      destructive: "border-destructive/20 bg-destructive/8 text-[color-mix(in_oklch,var(--destructive)_85%,black)] [&>svg]:text-destructive dark:text-destructive",
+      success: "border-success/20 bg-success/8 text-[color-mix(in_oklch,var(--success)_82%,black)] [&>svg]:text-success dark:text-success",
+      warning: "border-warning/25 bg-warning/12 text-[color-mix(in_oklch,var(--warning)_62%,black)] [&>svg]:text-warning dark:text-warning",
     },
   },
   defaultVariants: {
@@ -22,7 +22,7 @@ const Alert = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEleme
 Alert.displayName = "Alert";
 
 const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(({ className, ...props }, ref) => (
-  <h5 ref={ref} className={cn("mb-1 font-medium leading-none tracking-tight", className)} {...props} />
+  <h5 ref={ref} className={cn("mb-1 font-medium leading-none tracking-[-0.01em]", className)} {...props} />
 ));
 AlertTitle.displayName = "AlertTitle";
 

@@ -95,7 +95,7 @@ export function PatientFormDialog({ open, onOpenChange, patient }: Props) {
               <Input name="nik" defaultValue={patient?.nik ?? ""} maxLength={16} inputMode="numeric" placeholder="16 digit" />
             </Field>
             <Field label="Jenis Kelamin" required>
-              <select name="gender" defaultValue={patient?.gender ?? "MALE"} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
+              <select name="gender" defaultValue={patient?.gender ?? "MALE"} className="flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
                 <option value="MALE">Laki-laki</option>
                 <option value="FEMALE">Perempuan</option>
               </select>
@@ -107,13 +107,13 @@ export function PatientFormDialog({ open, onOpenChange, patient }: Props) {
               <Input name="birthPlace" defaultValue={patient?.birthPlace ?? ""} maxLength={128} />
             </Field>
             <Field label="Golongan Darah">
-              <select name="bloodType" defaultValue={patient?.bloodType ?? ""} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
+              <select name="bloodType" defaultValue={patient?.bloodType ?? ""} className="flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
                 <option value="">-</option>
                 {["A", "B", "AB", "O"].map((b) => <option key={b} value={b}>{b}</option>)}
               </select>
             </Field>
             <Field label="Status Pernikahan">
-              <select name="maritalStatus" defaultValue={patient?.maritalStatus ?? ""} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
+              <select name="maritalStatus" defaultValue={patient?.maritalStatus ?? ""} className="flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
                 <option value="">-</option>
                 <option value="SINGLE">Belum Menikah</option>
                 <option value="MARRIED">Menikah</option>

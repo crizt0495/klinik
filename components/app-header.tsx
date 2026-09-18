@@ -37,20 +37,20 @@ export function AppHeader({ user, unreadCount, collapsed, onToggleSidebar, onOpe
   const title = pathname === "/dashboard" ? "Dashboard" : pathname.split("/").filter(Boolean)[0]?.replace(/-/g, " ") ?? "";
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-card/80 px-4 backdrop-blur">
+    <header className="glass sticky top-0 z-30 flex h-14 items-center gap-1.5 border-b border-border/60 px-3 sm:px-4">
       <Button variant="ghost" size="icon" className="lg:hidden" onClick={onOpenMenu} aria-label="Buka menu">
         <Menu className="h-5 w-5" />
       </Button>
       <Button variant="ghost" size="icon" className="hidden lg:inline-flex" onClick={onToggleSidebar} aria-label="Toggle sidebar">
         {collapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
       </Button>
-      <h1 className="hidden flex-1 text-sm font-medium capitalize sm:block">{title}</h1>
+      <h1 className="hidden flex-1 text-[13px] font-semibold capitalize tracking-[-0.01em] sm:block">{title}</h1>
       <div className="flex-1 sm:hidden" />
 
-      <Button variant="outline" size="sm" className="hidden gap-2 text-muted-foreground md:inline-flex" onClick={onOpenCommand}>
-        <Search className="h-4 w-4" />
+      <Button variant="outline" size="sm" className="hidden gap-2 border-border/70 bg-muted/40 font-normal text-muted-foreground shadow-none hover:bg-muted md:inline-flex" onClick={onOpenCommand}>
+        <Search className="h-3.5 w-3.5" />
         <span className="hidden lg:inline">Cari pasien, resep, invoice...</span>
-        <kbd className="ml-1 hidden rounded border px-1 text-[10px] text-muted-foreground lg:inline">Ctrl+K</kbd>
+        <kbd className="ml-2 hidden rounded-md border border-border/70 bg-card px-1.5 py-0.5 font-sans text-[10px] font-medium text-muted-foreground/80 lg:inline">Ctrl K</kbd>
       </Button>
       <Button variant="ghost" size="icon-sm" className="md:hidden" onClick={onOpenCommand} aria-label="Pencarian">
         <Search className="h-4 w-4" />

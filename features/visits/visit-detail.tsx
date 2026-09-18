@@ -168,7 +168,7 @@ export function VisitDetail({ visit, options, canEdit, canFinalize }: Props) {
             <CardHeader><CardTitle className="text-sm">Tambah Diagnosa</CardTitle></CardHeader>
             <CardContent>
               <ActionForm label="Tambah" action={addDiagnosesAction} fields={[{ name: "medicalRecordId", defaultValue: mr.id, required: true }, { name: "visitId", defaultValue: visit.id }, { name: "diagnosisId", required: true, placeholder: "ID diagnosa dari list" }]} onSuccess={() => router.refresh()} />
-              <select className="mt-2 flex h-9 w-full max-w-sm rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm">
+              <select className="mt-2 flex h-9 w-full max-w-sm rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
                 <option value="">Pilih kode diagnosa...</option>
                 {options.diagnoses.map((d) => <option key={d.id} value={d.id}>{d.code} - {d.name}</option>)}
               </select>
@@ -206,7 +206,7 @@ export function VisitDetail({ visit, options, canEdit, canFinalize }: Props) {
             <CardHeader><CardTitle className="text-sm">Tambah Resep</CardTitle></CardHeader>
             <CardContent>
               <form action={async (fd: FormData) => { fd.append("visitId", visit.id); fd.append("patientId", visit.id); fd.append("doctorId", ""); const res = await createPrescriptionAction({}, fd); if (res.success) { toast.success("Resep dibuat"); router.refresh(); } else toast.error(res.error ?? "Gagal"); }} className="space-y-3 text-sm">
-                <select name="medicationId" required className="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 shadow-sm">
+                <select name="medicationId" required className="flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
                   <option value="">Pilih obat...</option>
                   {options.medications.map((m) => <option key={m.id} value={m.id}>{m.name} ({m.unit})</option>)}
                 </select>

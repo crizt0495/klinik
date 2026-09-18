@@ -54,28 +54,28 @@ export function RegisterVisitDialog({ options }: { options: Options }) {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <Label className="text-xs">Pasien</Label>
-                <select name="patientId" required className="mt-1.5 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
+                <select name="patientId" required className="mt-1.5 flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
                   <option value="">Pilih pasien...</option>
                   {options.patients.map((p) => <option key={p.id} value={p.id}>{p.fullName} · {p.medicalRecordNumber}</option>)}
                 </select>
               </div>
               <div>
                 <Label className="text-xs">Dokter</Label>
-                <select name="doctorId" required className="mt-1.5 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
+                <select name="doctorId" required className="mt-1.5 flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
                   <option value="">Pilih dokter...</option>
                   {options.doctors.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </div>
               <div>
                 <Label className="text-xs">Poli</Label>
-                <select name="departmentId" required className="mt-1.5 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
+                <select name="departmentId" required className="mt-1.5 flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
                   <option value="">Pilih poli...</option>
                   {options.departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </div>
               <div>
                 <Label className="text-xs">Prioritas Antrian</Label>
-                <select name="priority" className="mt-1.5 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
+                <select name="priority" className="mt-1.5 flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
                   <option value="NORMAL">Normal</option>
                   <option value="PRIORITY">Prioritas</option>
                   <option value="EMERGENCY">Gawat</option>

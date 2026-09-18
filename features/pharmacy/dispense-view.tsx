@@ -65,7 +65,7 @@ export function DispenseView({ prescription, items }: { prescription: DispensePr
         </CardContent>
       </Card>
 
-      {error ? <p className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{error}</p> : null}
+      {error ? <p className="rounded-lg border border-destructive/20 bg-destructive/8 p-3 text-sm text-[color-mix(in_oklch,var(--destructive)_85%,black)] dark:text-destructive">{error}</p> : null}
 
       <div className="space-y-3">
         {items.map((item) => (

@@ -35,18 +35,17 @@ export default async function DashboardPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
           {showFinance ? (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                  <TrendingUp className="h-4 w-4 text-primary" /> Pendapatan Hari Ini
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-semibold">{formatIDR(stats.todayRevenue)}</p>
-                <div className="mt-3 flex flex-wrap gap-4 text-sm">
-                  <span className="text-muted-foreground">
-                    Piutang: <span className="font-medium text-foreground">{formatIDR(stats.outstandingAmount)}</span> ({stats.outstandingInvoices} invoice)
-                  </span>
+            <Card className="overflow-hidden">
+              <CardContent className="relative p-6">
+                <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-primary/10 blur-2xl" />
+                <div className="relative space-y-1">
+                  <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    <TrendingUp className="h-3.5 w-3.5 text-primary" /> Pendapatan Hari Ini
+                  </p>
+                  <p className="nums text-3xl font-semibold tracking-[-0.02em]">{formatIDR(stats.todayRevenue)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Piutang <span className="nums font-medium text-foreground">{formatIDR(stats.outstandingAmount)}</span> · {stats.outstandingInvoices} invoice
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -57,26 +56,26 @@ export default async function DashboardPage() {
           {showClinical ? (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm font-medium">Aktivitas Terbaru</CardTitle>
+                <CardTitle className="text-[13px] font-medium text-muted-foreground">Aktivitas Terbaru</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {stats.recentActivity.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Belum ada aktivitas.</p>
-                  ) : (
-                    stats.recentActivity.map((a) => (
-                      <div key={a.id} className="flex items-start justify-between gap-2 text-sm">
-                        <div>
-                          <p className="font-medium">{a.action.replace(/_/g, " ")}</p>
-                          <p className="text-xs text-muted-foreground">{a.entityType}</p>
+                {stats.recentActivity.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Belum ada aktivitas.</p>
+                ) : (
+                  <div className="divide-y divide-border/60">
+                    {stats.recentActivity.map((a) => (
+                      <div key={a.id} className="flex items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium capitalize">{a.action.replace(/_/g, " ")}</p>
+                          <p className="truncate text-xs text-muted-foreground">{a.entityType}</p>
                         </div>
                         <span className="shrink-0 text-xs text-muted-foreground" title={formatDateTime(a.createdAt)}>
                           {timeAgo(a.createdAt)}
                         </span>
                       </div>
-                    ))
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ) : null}
@@ -86,24 +85,24 @@ export default async function DashboardPage() {
           {showPharmacy ? (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                  <Pill className="h-4 w-4 text-primary" /> Farmasi
+                <CardTitle className="flex items-center gap-2 text-[13px] font-medium text-muted-foreground">
+                  <Pill className="h-3.5 w-3.5 text-primary" /> Farmasi
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex items-center justify-between">
+              <CardContent className="divide-y divide-border/60 text-sm">
+                <div className="flex items-center justify-between pb-3">
                   <span className="text-muted-foreground">Resep tertunda</span>
-                  <Link href="/pharmacy" className="font-medium text-primary hover:underline">{stats.pendingPrescriptions}</Link>
+                  <Link href="/pharmacy" className="nums font-medium text-primary hover:underline">{stats.pendingPrescriptions}</Link>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between py-3">
                   <span className="text-muted-foreground">Obat stok rendah</span>
-                  <Link href="/inventory" className="flex items-center gap-1 font-medium text-warning hover:underline">
+                  <Link href="/inventory" className="nums flex items-center gap-1 font-medium text-[color-mix(in_oklch,var(--warning)_62%,black)] hover:underline dark:text-warning">
                     <AlertTriangle className="h-3.5 w-3.5" /> {stats.lowStock}
                   </Link>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Obat mendekati kadaluarsa</span>
-                  <Link href="/inventory/batches" className="font-medium text-warning hover:underline">{stats.expiringSoon}</Link>
+                <div className="flex items-center justify-between pt-3">
+                  <span className="text-muted-foreground">Mendekati kadaluarsa</span>
+                  <Link href="/inventory/batches" className="nums font-medium text-[color-mix(in_oklch,var(--warning)_62%,black)] hover:underline dark:text-warning">{stats.expiringSoon}</Link>
                 </div>
               </CardContent>
             </Card>
@@ -112,20 +111,20 @@ export default async function DashboardPage() {
           {can(user, "laboratory.view") || can(user, "radiology.view") ? (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm font-medium">Diagnostik</CardTitle>
+                <CardTitle className="text-[13px] font-medium text-muted-foreground">Diagnostik</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-muted-foreground">
                     <FlaskConical className="h-4 w-4" /> Laboratorium
                   </span>
-                  <Link href="/laboratory" className="font-medium text-primary hover:underline">{stats.pendingLab}</Link>
+                  <Link href="/laboratory" className="nums font-medium text-primary hover:underline">{stats.pendingLab}</Link>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-muted-foreground">
                     <ScanLine className="h-4 w-4" /> Radiologi
                   </span>
-                  <Link href="/radiology" className="font-medium text-primary hover:underline">{stats.pendingRad}</Link>
+                  <Link href="/radiology" className="nums font-medium text-primary hover:underline">{stats.pendingRad}</Link>
                 </div>
               </CardContent>
             </Card>
@@ -138,14 +137,16 @@ export default async function DashboardPage() {
 
 function StatCard({ icon: Icon, label, value, href }: { icon: typeof Users; label: string; value: string; href: string }) {
   return (
-    <Link href={href}>
-      <Card className="transition-colors hover:border-primary/40">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle>
-          <Icon className="h-4 w-4 text-primary" />
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-semibold">{value}</p>
+    <Link href={href} className="group">
+      <Card className="h-full transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/30 group-hover:shadow-pop">
+        <CardContent className="flex items-start justify-between gap-3 p-5">
+          <div className="space-y-2">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+            <p className="nums text-2xl font-semibold tracking-[-0.02em]">{value}</p>
+          </div>
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
+            <Icon className="h-4 w-4" />
+          </div>
         </CardContent>
       </Card>
     </Link>

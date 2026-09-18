@@ -34,7 +34,7 @@ export function StockOpnameForm({ inventory }: { inventory: InventoryRow[] }) {
           {state.error ? <Alert variant="destructive"><AlertDescription>{state.error}</AlertDescription></Alert> : null}
           <div>
             <Label className="text-xs">Pilih Batch Obat</Label>
-            <select name="batchId" required value={selectedBatchId} onChange={(e) => setSelectedBatchId(e.target.value)} className="mt-1.5 flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm">
+            <select name="batchId" required value={selectedBatchId} onChange={(e) => setSelectedBatchId(e.target.value)} className="mt-1.5 flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
               <option value="">Pilih batch...</option>
               {inventory.map((i) => <option key={i.batchId} value={i.batchId}>{i.medicationName} ({i.batchNumber}) — stok: {i.quantityAvailable} {i.unit}</option>)}
             </select>

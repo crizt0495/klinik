@@ -99,7 +99,7 @@ export function InvoiceDetailView({ invoice }: { invoice: InvoiceDetailData }) {
               {payState.error ? <p className="rounded-md bg-destructive/10 p-2 text-sm text-destructive">{payState.error}</p> : null}
               <div>
                 <Label className="text-xs">Metode</Label>
-                <select name="method" required className="mt-1.5 flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm">
+                <select name="method" required className="mt-1.5 flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
                   <option value="CASH">Tunai</option>
                   <option value="TRANSFER">Transfer</option>
                   <option value="E_WALLET">E-Wallet</option>

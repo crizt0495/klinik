@@ -64,7 +64,7 @@ export function PurchaseOrderFormDialog({ suppliers, medications }: Props) {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <Label className="text-xs">Supplier</Label>
-                <select name="supplierId" required className="mt-1.5 flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm">
+                <select name="supplierId" required className="mt-1.5 flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
                   <option value="">Pilih supplier...</option>
                   {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
@@ -78,7 +78,7 @@ export function PurchaseOrderFormDialog({ suppliers, medications }: Props) {
                 <div key={idx} className="flex items-end gap-2">
                   <div className="flex-1">
                     <Label className="text-xs">Obat</Label>
-                    <select value={item.medicationId} onChange={(e) => updateItem(idx, { medicationId: e.target.value })} required className="mt-1 flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm">
+                    <select value={item.medicationId} onChange={(e) => updateItem(idx, { medicationId: e.target.value })} required className="mt-1 flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
                       <option value="">Pilih obat...</option>
                       {medications.map((m) => <option key={m.id} value={m.id}>{m.name} ({m.unit})</option>)}
                     </select>

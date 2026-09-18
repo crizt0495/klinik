@@ -38,7 +38,7 @@ export function LoginForm() {
   }
 
   return (
-    <Card>
+    <Card className="border-border/70 shadow-pop">
       <CardContent className="pt-6">
         <form action={handleSubmit} className="space-y-4">
           {state?.error ? (
@@ -66,7 +66,7 @@ export function LoginForm() {
                 type="button"
                 tabIndex={-1}
                 onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-1.5 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

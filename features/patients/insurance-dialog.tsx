@@ -55,7 +55,7 @@ export function InsuranceDialog({ patientId, providers }: Props) {
           ) : null}
           <div className="space-y-2">
             <Label className="text-xs">Penyedia Asuransi</Label>
-            <select name="insuranceProviderId" required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
+            <select name="insuranceProviderId" required className="flex h-9 w-full rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12">
               {providers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>

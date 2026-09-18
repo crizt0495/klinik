@@ -186,7 +186,7 @@ export function RolesView({ roles, permissions, rolePermissionMap, canManage }: 
                   const allSelected = permRows.every((p) => selected.has(p.id));
                   const hasSelected = permRows.some((p) => selected.has(p.id));
                   return (
-                    <div key={moduleName} className="rounded-md border p-4">
+                    <div key={moduleName} className="rounded-lg border border-border/70 p-4">
                       <div className="flex items-center justify-between gap-2">
                         <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{moduleName}</h4>
                         {canManage ? (

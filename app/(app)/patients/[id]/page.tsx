@@ -102,7 +102,7 @@ export default async function PatientDetailPage({ params }: Props) {
               ) : (
                 <div className="space-y-3">
                   {timeline.map((ev) => (
-                    <Link key={`${ev.type}-${ev.id}`} href={ev.href} className="flex items-center justify-between rounded-md border p-3 text-sm transition-colors hover:bg-muted/50">
+                    <Link key={`${ev.type}-${ev.id}`} href={ev.href} className="flex items-center justify-between rounded-lg border border-border/70 p-3 text-sm transition-colors hover:bg-muted/40">
                       <div>
                         <p className="font-medium">{ev.title}</p>
                         <p className="text-xs text-muted-foreground">{ev.type} · {formatDate(ev.date)} · {ev.sub}</p>
@@ -128,7 +128,7 @@ export default async function PatientDetailPage({ params }: Props) {
               ) : (
                 <div className="space-y-2">
                   {insurance.map((ins) => (
-                    <div key={ins.id} className="rounded-md border p-3 text-sm">
+                    <div key={ins.id} className="rounded-lg border border-border/70 p-3 text-sm">
                       <div className="flex items-center justify-between">
                         <p className="font-medium">{ins.providerName}</p>
                         {ins.isPrimary ? <StatusBadge status="ACTIVE" /> : null}

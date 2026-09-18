@@ -22,9 +22,9 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     <div className="space-y-4">
       <PageHeader title="Laporan" description="Ringkasan data klinik berdasarkan periode." />
       <form method="GET" className="flex flex-wrap items-end gap-3">
-        <div className="space-y-1.5"><label className="text-xs text-muted-foreground">Dari</label><input type="date" name="from" defaultValue={dateFrom} className="flex h-9 rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm" /></div>
-        <div className="space-y-1.5"><label className="text-xs text-muted-foreground">Sampai</label><input type="date" name="to" defaultValue={dateTo} className="flex h-9 rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm" /></div>
-        <button type="submit" className="inline-flex h-9 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90">Tampilkan</button>
+        <div className="space-y-1.5"><label className="text-xs text-muted-foreground">Dari</label><input type="date" name="from" defaultValue={dateFrom} className="flex h-9 rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12" /></div>
+        <div className="space-y-1.5"><label className="text-xs text-muted-foreground">Sampai</label><input type="date" name="to" defaultValue={dateTo} className="flex h-9 rounded-lg border border-input bg-card px-3 py-1 text-sm shadow-2xs transition-colors focus-visible:border-ring/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/12" /></div>
+        <button type="submit" className="inline-flex h-9 items-center rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90">Tampilkan</button>
       </form>
 
       <div className="grid gap-4 sm:grid-cols-3">
