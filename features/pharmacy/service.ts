@@ -1,5 +1,6 @@
 import { and, eq, sql, desc, asc } from "drizzle-orm";
 import { db } from "@/db";
+import { runInTransaction } from "@/db/transaction";
 import * as s from "@/db/schema";
 import type { SessionUser } from "@/lib/auth/session";
 import { NotFoundError, InsufficientStockError, InvalidStateError, ConflictError } from "@/lib/errors";
@@ -63,60 +64,65 @@ export async function getPrescription(user: SessionUser, id: string) {
 }
 
 export async function dispensePrescriptionItem(user: SessionUser, prescriptionItemId: string) {
-  const rows = await db().select().from(s.prescriptionItems).where(eq(s.prescriptionItems.id, prescriptionItemId)).limit(1);
-  const item = rows[0];
-  if (!item) throw new NotFoundError("Item resep tidak ditemukan");
-  if (item.status === "DISPENSED") throw new InvalidStateError("Item sudah diserahkan");
-  const remaining = item.quantity - item.dispensedQuantity;
-  if (remaining <= 0) throw new InvalidStateError("Jumlah sudah terpenuhi");
-  let toDispense = remaining;
+  const stats = await runInTransaction(async (tx) => {
+    const rows = await tx.select().from(s.prescriptionItems).where(eq(s.prescriptionItems.id, prescriptionItemId)).for("update").limit(1);
+    const item = rows[0];
+    if (!item) throw new NotFoundError("Item resep tidak ditemukan");
+    if (item.status === "DISPENSED") throw new InvalidStateError("Item sudah diserahkan");
+    const remaining = item.quantity - item.dispensedQuantity;
+    if (remaining <= 0) throw new InvalidStateError("Jumlah sudah terpenuhi");
+    let toDispense = remaining;
 
-  const batches = await db()
-    .select()
-    .from(s.inventoryBatches)
-    .where(and(
-      eq(s.inventoryBatches.organizationId, user.organizationId),
-      eq(s.inventoryBatches.branchId, user.branchId ?? ""),
-      eq(s.inventoryBatches.medicationId, item.medicationId),
-      eq(s.inventoryBatches.status, "ACTIVE"),
-      sql`${s.inventoryBatches.quantityAvailable} > 0`,
-    ))
-    .orderBy(asc(s.inventoryBatches.expiryDate));
+    const batches = await tx
+      .select()
+      .from(s.inventoryBatches)
+      .where(and(
+        eq(s.inventoryBatches.organizationId, user.organizationId),
+        eq(s.inventoryBatches.branchId, user.branchId ?? ""),
+        eq(s.inventoryBatches.medicationId, item.medicationId),
+        eq(s.inventoryBatches.status, "ACTIVE"),
+        sql`${s.inventoryBatches.quantityAvailable} > 0`,
+      ))
+      .for("update")
+      .orderBy(asc(s.inventoryBatches.expiryDate), asc(s.inventoryBatches.id));
 
-  let totalAvailable = 0;
-  for (const b of batches) totalAvailable += b.quantityAvailable;
-  if (totalAvailable < toDispense) throw new InsufficientStockError(`Stok obat tidak mencukupi (tersedia: ${totalAvailable}, dibutuhkan: ${toDispense})`);
+    let totalAvailable = 0;
+    for (const b of batches) totalAvailable += b.quantityAvailable;
+    if (totalAvailable < toDispense) throw new InsufficientStockError(`Stok obat tidak mencukupi (tersedia: ${totalAvailable}, dibutuhkan: ${toDispense})`);
 
-  let dispensedTotal = item.dispensedQuantity;
-  const allocations: Array<{ batchId: string; quantity: number }> = [];
+    let dispensedTotal = item.dispensedQuantity;
+    const allocations: Array<{ batchId: string; quantity: number }> = [];
 
-  for (const batch of batches) {
-    if (toDispense <= 0) break;
-    const alloc = Math.min(toDispense, batch.quantityAvailable);
-    if (alloc <= 0) continue;
-    allocations.push({ batchId: batch.id, quantity: alloc });
-    await db().update(s.inventoryBatches).set({ quantityAvailable: sql`${s.inventoryBatches.quantityAvailable} - ${alloc}`, updatedAt: new Date() }).where(eq(s.inventoryBatches.id, batch.id));
-    await db().insert(s.inventoryTransactions).values({ organizationId: user.organizationId, branchId: user.branchId ?? "", medicationId: item.medicationId, batchId: batch.id, transactionType: "DISPENSE", quantity: -alloc, referenceType: "prescription_items", referenceId: prescriptionItemId, reason: `Dispensing resep`, performedBy: user.id });
-    toDispense -= alloc;
-    dispensedTotal += alloc;
-  }
+    for (const batch of batches) {
+      if (toDispense <= 0) break;
+      const alloc = Math.min(toDispense, batch.quantityAvailable);
+      if (alloc <= 0) continue;
+      allocations.push({ batchId: batch.id, quantity: alloc });
+      await tx.update(s.inventoryBatches).set({ quantityAvailable: sql`${s.inventoryBatches.quantityAvailable} - ${alloc}`, updatedAt: new Date() }).where(eq(s.inventoryBatches.id, batch.id));
+      await tx.insert(s.inventoryTransactions).values({ organizationId: user.organizationId, branchId: user.branchId ?? "", medicationId: item.medicationId, batchId: batch.id, transactionType: "DISPENSE", quantity: -alloc, referenceType: "prescription_items", referenceId: prescriptionItemId, reason: `Dispensing resep`, performedBy: user.id });
+      toDispense -= alloc;
+      dispensedTotal += alloc;
+    }
 
-  if (allocations.length > 0) {
-    await db().insert(s.prescriptionBatchAllocations).values(allocations.map((a) => ({ prescriptionItemId, batchId: a.batchId, quantity: a.quantity })));
-  }
+    if (allocations.length > 0) {
+      await tx.insert(s.prescriptionBatchAllocations).values(allocations.map((a) => ({ prescriptionItemId, batchId: a.batchId, quantity: a.quantity })));
+    }
 
-  const newStatus = dispensedTotal >= item.quantity ? "DISPENSED" : "PARTIAL";
-  await db().update(s.prescriptionItems).set({ dispensedQuantity: dispensedTotal, status: newStatus, updatedAt: new Date() }).where(eq(s.prescriptionItems.id, prescriptionItemId));
+    const newStatus = dispensedTotal >= item.quantity ? "DISPENSED" : "PARTIAL";
+    await tx.update(s.prescriptionItems).set({ dispensedQuantity: dispensedTotal, status: newStatus, updatedAt: new Date() }).where(eq(s.prescriptionItems.id, prescriptionItemId));
 
-  // Update parent prescription status
-  const prescriptionId = item.prescriptionId;
-  const allItems = await db().select({ status: s.prescriptionItems.status }).from(s.prescriptionItems).where(eq(s.prescriptionItems.prescriptionId, prescriptionId));
-  const allDispensed = allItems.every((i) => i.status === "DISPENSED");
-  const anyDispensed = allItems.some((i) => i.status !== "PENDING");
-  const prescriptionStatus = allDispensed ? "DISPENSED" : anyDispensed ? "PARTIALLY_DISPENSED" : "ISSUED";
-  await db().update(s.prescriptions).set({ status: prescriptionStatus, updatedAt: new Date() }).where(eq(s.prescriptions.id, prescriptionId));
+    // Update parent prescription status
+    const prescriptionId = item.prescriptionId;
+    const allItems = await tx.select({ status: s.prescriptionItems.status }).from(s.prescriptionItems).where(eq(s.prescriptionItems.prescriptionId, prescriptionId));
+    const allDispensed = allItems.every((i) => i.status === "DISPENSED");
+    const anyDispensed = allItems.some((i) => i.status !== "PENDING");
+    const prescriptionStatus = allDispensed ? "DISPENSED" : anyDispensed ? "PARTIALLY_DISPENSED" : "ISSUED";
+    await tx.update(s.prescriptions).set({ status: prescriptionStatus, updatedAt: new Date() }).where(eq(s.prescriptions.id, prescriptionId));
 
-  await writeAuditLog({ user, action: "DISPENSE_ITEM", entityType: "prescription_items", entityId: prescriptionItemId, newData: { dispensedQuantity: dispensedTotal, batchAllocations: allocations.length } });
+    return { dispensedTotal, allocationCount: allocations.length };
+  });
+
+  await writeAuditLog({ user, action: "DISPENSE_ITEM", entityType: "prescription_items", entityId: prescriptionItemId, newData: { dispensedQuantity: stats.dispensedTotal, batchAllocations: stats.allocationCount } });
   await writeActivityLog({ organizationId: user.organizationId, branchId: user.branchId, userId: user.id, action: "prescription_item_dispensed", entityType: "prescription_items", entityId: prescriptionItemId });
 }
 

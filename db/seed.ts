@@ -97,7 +97,7 @@ export async function runSeed(): Promise<void> {
   const userMap: Record<string, string> = {};
   for (const [key, demo] of Object.entries(DEMO_USERS)) {
     const passwordHash = await hashPassword(demo.password);
-    const inserted = await db.insert(schema.users).values({ organizationId, branchId, username: demo.username, passwordHash, fullName: demo.fullName, isActive: true }).returning();
+    const inserted = await db.insert(schema.users).values({ organizationId, branchId, username: demo.username, passwordHash, fullName: demo.fullName, isActive: true, mustChangePassword: true }).returning();
     userMap[key] = inserted[0].id;
     const roleCode = key === "doctor" ? "DOKTER" : key === "nurse" ? "PERAWAT" : key === "receptionist" ? "RESEPSIONIS" : key === "pharmacist" ? "APOTEKER" : key === "cashier" ? "KASIR" : key === "lab" ? "PETUGAS_LAB" : key === "radiology" ? "PETUGAS_RADIOLOGI" : key === "manager" ? "MANAJER" : key === "owner" ? "OWNER" : "ADMIN_KLINIK";
     const roleId = roleIds.get(roleCode);

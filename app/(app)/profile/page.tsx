@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import { getSessionUser } from "@/lib/auth/guard";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ChangePasswordForm } from "@/components/change-password-form";
 import { ROLE_DEFINITIONS } from "@/lib/permissions";
 
 export const metadata: Metadata = { title: "Profil" };
 
-export default async function ProfilePage() {
+export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ force?: string }> }) {
+  const { force } = await searchParams;
   const user = await getSessionUser();
+  const forced = force === "1" || user.mustChangePassword;
   const fields: Array<{ label: string; value: string }> = [
     { label: "Nama Lengkap", value: user.fullName },
     { label: "Username", value: `@${user.username}` },
@@ -52,6 +55,15 @@ export default async function ProfilePage() {
             Status akun: {user.isActive ? "Aktif" : "Nonaktif"} · Organisasi: {user.organizationStatus}
             {user.branchStatus ? ` · Cabang: ${user.branchStatus}` : ""}
           </p>
+        </CardContent>
+      </Card>
+      <Card className="border-border/70 shadow-card">
+        <CardHeader>
+          <CardTitle className="text-base">Keamanan</CardTitle>
+          <CardDescription>Ganti password Anda secara berkala. Pastikan password baru minimal 8 karakter.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ChangePasswordForm forced={forced} />
         </CardContent>
       </Card>
     </div>

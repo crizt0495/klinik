@@ -31,6 +31,12 @@ export function LoginForm() {
     const res = await loginAction(state ?? { error: undefined }, formData);
     setState(res);
     if (res.success) {
+      if (res.mustChangePassword) {
+        toast("Aman dulu: Anda wajib mengganti password bawaan sebelum lanjut.");
+        router.replace("/profile?force=1");
+        router.refresh();
+        return;
+      }
       toast.success("Berhasil masuk");
       router.push("/dashboard");
       router.refresh();

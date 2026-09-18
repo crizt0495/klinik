@@ -1,5 +1,6 @@
 import { and, eq, sql, desc, asc } from "drizzle-orm";
 import { db } from "@/db";
+import { runInTransaction } from "@/db/transaction";
 import * as s from "@/db/schema";
 import type { SessionUser } from "@/lib/auth/session";
 import { NotFoundError, InvalidStateError } from "@/lib/errors";
@@ -29,17 +30,21 @@ export async function listInventory(user: SessionUser) {
 }
 
 export async function createStockOpname(user: SessionUser, medicationId: string, batchId: string, countedQuantity: number, notes?: string) {
-  const batch = await db().select().from(s.inventoryBatches).where(and(eq(s.inventoryBatches.id, batchId), eq(s.inventoryBatches.organizationId, user.organizationId))).limit(1);
-  const b = batch[0];
-  if (!b) throw new NotFoundError("Batch inventory tidak ditemukan");
-  const diff = countedQuantity - b.quantityAvailable;
-  if (diff !== 0) {
-    await db().update(s.inventoryBatches).set({ quantityAvailable: countedQuantity, updatedAt: new Date() }).where(eq(s.inventoryBatches.id, batchId));
-    await db().insert(s.inventoryTransactions).values({
-      organizationId: user.organizationId, branchId: user.branchId ?? "", medicationId, batchId, transactionType: "ADJUSTMENT", quantity: diff, referenceType: "stock_opname", referenceId: null, reason: notes ?? `Stock opname: ${b.quantityAvailable} → ${countedQuantity}`, performedBy: user.id,
-    });
-  }
-  await writeAuditLog({ user, action: "STOCK_ADJUSTMENT", entityType: "inventory_batches", entityId: batchId, oldData: { quantityAvailable: b.quantityAvailable }, newData: { quantityAvailable: countedQuantity } });
+  const result = await runInTransaction(async (tx) => {
+    const batch = await tx.select().from(s.inventoryBatches).where(and(eq(s.inventoryBatches.id, batchId), eq(s.inventoryBatches.organizationId, user.organizationId))).for("update").limit(1);
+    const b = batch[0];
+    if (!b) throw new NotFoundError("Batch inventory tidak ditemukan");
+    const diff = countedQuantity - b.quantityAvailable;
+    if (diff !== 0) {
+      await tx.update(s.inventoryBatches).set({ quantityAvailable: countedQuantity, updatedAt: new Date() }).where(eq(s.inventoryBatches.id, batchId));
+      await tx.insert(s.inventoryTransactions).values({
+        organizationId: user.organizationId, branchId: user.branchId ?? "", medicationId, batchId, transactionType: "ADJUSTMENT", quantity: diff, referenceType: "stock_opname", referenceId: null, reason: notes ?? `Stock opname: ${b.quantityAvailable} → ${countedQuantity}`, performedBy: user.id,
+      });
+      return { adjusted: true, oldQuantity: b.quantityAvailable };
+    }
+    return { adjusted: false, oldQuantity: b.quantityAvailable };
+  });
+  await writeAuditLog({ user, action: "STOCK_ADJUSTMENT", entityType: "inventory_batches", entityId: batchId, oldData: { quantityAvailable: result.oldQuantity }, newData: { quantityAvailable: countedQuantity } });
 }
 
 export async function listPurchaseOrders(user: SessionUser) {
@@ -99,43 +104,49 @@ export async function createPurchaseOrder(user: SessionUser, data: { supplierId:
 }
 
 export async function receivePurchaseOrder(user: SessionUser, purchaseOrderId: string, received: Array<{ itemId: string; quantityReceived: number }>) {
-  const poRows = await db().select().from(s.purchaseOrders).where(and(eq(s.purchaseOrders.id, purchaseOrderId), eq(s.purchaseOrders.organizationId, user.organizationId))).limit(1);
-  const po = poRows[0];
-  if (!po) throw new NotFoundError("PO tidak ditemukan");
-  if (po.status === "RECEIVED") throw new InvalidStateError("PO sudah diterima");
-  if (po.status === "CANCELLED") throw new InvalidStateError("PO sudah dibatalkan");
+  const receivedItems = received.filter((r) => r.quantityReceived > 0);
 
-  for (const r of received) {
-    const itemRows = await db().select().from(s.purchaseOrderItems).where(eq(s.purchaseOrderItems.id, r.itemId)).limit(1);
-    const item = itemRows[0];
-    if (!item) throw new NotFoundError(`Item ${r.itemId} tidak ditemukan`);
-    if (r.quantityReceived <= 0) continue;
+  await runInTransaction(async (tx) => {
+    // Kunci baris PO sehingga penerimaan paralel terserialisasi
+    // dan tidak menghasilkan stok/batch yang dobel.
+    const poRows = await tx.select().from(s.purchaseOrders).where(and(eq(s.purchaseOrders.id, purchaseOrderId), eq(s.purchaseOrders.organizationId, user.organizationId))).for("update").limit(1);
+    const po = poRows[0];
+    if (!po) throw new NotFoundError("PO tidak ditemukan");
+    if (po.status === "RECEIVED") throw new InvalidStateError("PO sudah diterima");
+    if (po.status === "CANCELLED") throw new InvalidStateError("PO sudah dibatalkan");
 
-    await db().update(s.purchaseOrderItems).set({ receivedQuantity: sql`${s.purchaseOrderItems.receivedQuantity} + ${r.quantityReceived}`, updatedAt: new Date() }).where(eq(s.purchaseOrderItems.id, r.itemId));
+    for (const r of receivedItems) {
+      const itemRows = await tx.select().from(s.purchaseOrderItems).where(eq(s.purchaseOrderItems.id, r.itemId)).for("update").limit(1);
+      const item = itemRows[0];
+      if (!item) throw new NotFoundError(`Item ${r.itemId} tidak ditemukan`);
+      if (item.purchaseOrderId !== purchaseOrderId) throw new InvalidStateError("Item tidak termasuk dalam PO ini");
 
-    // Create batch (default expiry 1 year from now)
-    const expiryDate = new Date();
-    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-    const batchNumber = `BAT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-    const [newBatch] = await db().insert(s.inventoryBatches).values({
-      organizationId: user.organizationId, branchId: user.branchId ?? "", medicationId: item.medicationId, batchNumber, expiryDate: expiryDate.toISOString().slice(0, 10), quantityReceived: r.quantityReceived, quantityAvailable: r.quantityReceived, purchasePrice: item.unitPrice, receivedAt: new Date(), status: "ACTIVE",
-    }).returning({ id: s.inventoryBatches.id });
+      await tx.update(s.purchaseOrderItems).set({ receivedQuantity: sql`${s.purchaseOrderItems.receivedQuantity} + ${r.quantityReceived}`, updatedAt: new Date() }).where(eq(s.purchaseOrderItems.id, r.itemId));
 
-    await db().insert(s.inventoryTransactions).values({
-      organizationId: user.organizationId, branchId: user.branchId ?? "", medicationId: item.medicationId, batchId: newBatch.id, transactionType: "RECEIPT", quantity: r.quantityReceived, referenceType: "purchase_orders", referenceId: purchaseOrderId, reason: `Penerimaan PO ${po.poNumber}`, performedBy: user.id,
-    });
-  }
+      // Create batch (default expiry 1 year from now)
+      const expiryDate = new Date();
+      expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+      const batchNumber = `BAT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      const [newBatch] = await tx.insert(s.inventoryBatches).values({
+        organizationId: user.organizationId, branchId: user.branchId ?? "", medicationId: item.medicationId, batchNumber, expiryDate: expiryDate.toISOString().slice(0, 10), quantityReceived: r.quantityReceived, quantityAvailable: r.quantityReceived, purchasePrice: item.unitPrice, receivedAt: new Date(), status: "ACTIVE",
+      }).returning({ id: s.inventoryBatches.id });
 
-  // Check if all items fully received
-  const allItems = await db().select().from(s.purchaseOrderItems).where(eq(s.purchaseOrderItems.purchaseOrderId, purchaseOrderId));
-  const allReceived = allItems.every((i) => i.receivedQuantity >= i.quantity);
-  if (allReceived) {
-    await db().update(s.purchaseOrders).set({ status: "RECEIVED", updatedAt: new Date() }).where(eq(s.purchaseOrders.id, purchaseOrderId));
-  } else {
-    await db().update(s.purchaseOrders).set({ status: "PARTIALLY_RECEIVED", updatedAt: new Date() }).where(eq(s.purchaseOrders.id, purchaseOrderId));
-  }
+      await tx.insert(s.inventoryTransactions).values({
+        organizationId: user.organizationId, branchId: user.branchId ?? "", medicationId: item.medicationId, batchId: newBatch.id, transactionType: "RECEIPT", quantity: r.quantityReceived, referenceType: "purchase_orders", referenceId: purchaseOrderId, reason: `Penerimaan PO ${po.poNumber}`, performedBy: user.id,
+      });
+    }
 
-  await writeAuditLog({ user, action: "RECEIVE_PO", entityType: "purchase_orders", entityId: purchaseOrderId, newData: { receivedItems: received.length } });
+    // Check if all items fully received
+    const allItems = await tx.select().from(s.purchaseOrderItems).where(eq(s.purchaseOrderItems.purchaseOrderId, purchaseOrderId));
+    const allReceived = allItems.every((i) => i.receivedQuantity >= i.quantity);
+    if (allReceived) {
+      await tx.update(s.purchaseOrders).set({ status: "RECEIVED", updatedAt: new Date() }).where(eq(s.purchaseOrders.id, purchaseOrderId));
+    } else {
+      await tx.update(s.purchaseOrders).set({ status: "PARTIALLY_RECEIVED", updatedAt: new Date() }).where(eq(s.purchaseOrders.id, purchaseOrderId));
+    }
+  });
+
+  await writeAuditLog({ user, action: "RECEIVE_PO", entityType: "purchase_orders", entityId: purchaseOrderId, newData: { receivedItems: receivedItems.length } });
 }
 
 export async function listSuppliers(user: SessionUser) {

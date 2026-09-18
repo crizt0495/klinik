@@ -1,4 +1,4 @@
-import { and, eq, isNull, desc, sql } from "drizzle-orm";
+import { and, eq, isNull, desc, sql, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import * as s from "@/db/schema";
 import type { SessionUser } from "@/lib/auth/session";
@@ -85,7 +85,6 @@ export async function createQueueEntry(user: SessionUser, patientId: string, dep
 }
 
 export async function updateQueueStatus(user: SessionUser, queueId: string, newStatus: string) {
-  const q = await getQueue(user, queueId);
   const allowed: Record<string, { valid: string[]; patch: Record<string, Date | string> }> = {
     CALLED: { valid: ["WAITING"], patch: { calledAt: new Date(), status: "CALLED" } },
     SERVING: { valid: ["CALLED"], patch: { servedAt: new Date(), status: "SERVING" } },
@@ -94,11 +93,25 @@ export async function updateQueueStatus(user: SessionUser, queueId: string, newS
     SKIPPED: { valid: ["WAITING", "CALLED"], patch: { status: "SKIPPED" } },
   };
   const rule = allowed[newStatus];
-  if (!rule || !rule.valid.includes(q.status)) throw new ConflictError(`Tidak dapat mengubah status dari ${q.status} ke ${newStatus}`);
-  const updated = await db().update(s.queues).set(rule.patch).where(eq(s.queues.id, queueId)).returning();
-  await writeAuditLog({ user, action: `QUEUE_${newStatus}`, entityType: "queues", entityId: queueId, oldData: { status: q.status }, newData: { status: newStatus } });
+  if (!rule) throw new ConflictError(`Status transisi "${newStatus}" tidak dikenal`);
+  // Guarded update: hanya berhasil jika status saat ini masih termasuk transisi yang
+  // diizinkan (atomik), sehingga dua operator tidak bisa memutakhirkan antrian yang sama
+  // secara paralel / dari status yang sudah basi.
+  const updated = await db()
+    .update(s.queues)
+    .set(rule.patch)
+    .where(and(eq(s.queues.id, queueId), eq(s.queues.organizationId, user.organizationId), inArray(s.queues.status, rule.valid)))
+    .returning();
+
+  const q = updated[0];
+  if (!q) {
+    const current = await getQueue(user, queueId);
+    throw new ConflictError(`Tidak dapat mengubah status dari ${current.status} ke ${newStatus}`);
+  }
+
+  await writeAuditLog({ user, action: `QUEUE_${newStatus}`, entityType: "queues", entityId: queueId, newData: { status: newStatus } });
   await writeActivityLog({ organizationId: user.organizationId, branchId: user.branchId, userId: user.id, action: `queue_${newStatus.toLowerCase()}`, entityType: "queues", entityId: queueId });
-  return updated[0];
+  return q;
 }
 
 export async function getQueue(user: SessionUser, id: string) {

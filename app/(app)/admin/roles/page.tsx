@@ -15,7 +15,7 @@ export default async function RolesPage() {
   const canManage = can(user, "roles.manage");
   const rolePermissionMap: Record<string, string[]> = {};
   for (const role of roles) {
-    const rows = await getRolePermissions(role.id);
+    const rows = await getRolePermissions(user, role.id);
     rolePermissionMap[role.id] = rows.map((r) => r.permissionId);
   }
   return (

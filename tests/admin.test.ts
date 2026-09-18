@@ -81,13 +81,13 @@ describe("modul administrasi (pengguna & peran)", () => {
     const perms = await listPermissions(admin);
     const target = perms.filter((p) => ["patients.view", "billing.view"].includes(p.code)).map((p) => p.id);
     await assignRolePermissions(admin, role.id, target);
-    const assigned = (await getRolePermissions(role.id)).map((p) => p.permissionId).sort();
+    const assigned = (await getRolePermissions(admin, role.id)).map((p) => p.permissionId).sort();
     expect(assigned).toEqual(target.sort());
   });
 
   it("11. getRolePermissions untuk peran tanpa permission mengembalikan kosong", async () => {
     const role = await createRole(admin, { name: `Peran Kosong ${Date.now()}` });
-    expect(await getRolePermissions(role.id)).toHaveLength(0);
+    expect(await getRolePermissions(admin, role.id)).toHaveLength(0);
   });
 
   it("12. listUsers menyertakan status aktif", async () => {

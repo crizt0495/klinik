@@ -25,7 +25,10 @@ export function RegisterVisitDialog({ options }: { options: Options }) {
   const [state, setState] = React.useState<ActionState>({});
   const [pending, setPending] = React.useState(false);
 
-  React.useEffect(() => { if (open) setState({}); }, [open]);
+  function handleOpenChange(open: boolean) {
+    if (!open) setState({});
+    setOpen(open);
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -43,7 +46,7 @@ export function RegisterVisitDialog({ options }: { options: Options }) {
   return (
     <>
       <Button onClick={() => setOpen(true)}>Registrasi Kunjungan</Button>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Registrasi Kunjungan Baru</DialogTitle>

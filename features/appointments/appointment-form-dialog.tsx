@@ -31,9 +31,10 @@ export function AppointmentFormDialog({ open, onOpenChange, options }: Props) {
   const [state, setState] = React.useState<ActionState>({});
   const [pending, setPending] = React.useState(false);
 
-  React.useEffect(() => {
-    if (open) setState({});
-  }, [open]);
+  function handleOpenChange(open: boolean) {
+    if (!open) setState({});
+    onOpenChange(open);
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -51,7 +52,7 @@ export function AppointmentFormDialog({ open, onOpenChange, options }: Props) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Buat Appointment</DialogTitle>

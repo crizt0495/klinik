@@ -16,6 +16,7 @@ export type LoginActionState = {
   error?: string;
   fieldErrors?: Record<string, string>;
   success?: boolean;
+  mustChangePassword?: boolean;
 };
 
 export async function loginAction(_prev: LoginActionState, formData: FormData): Promise<LoginActionState> {
@@ -40,7 +41,7 @@ export async function loginAction(_prev: LoginActionState, formData: FormData): 
     await completeLogin(result);
     await recordLoginAttempt(parsed.data.username, ip, true);
 
-    return { success: true };
+    return { success: true, mustChangePassword: result.mustChangePassword };
   } catch (err) {
     const appErr = toAppError(err);
     if (appErr instanceof AppError && (appErr.code === "NOT_FOUND" || appErr.code === "VALIDATION_ERROR")) {

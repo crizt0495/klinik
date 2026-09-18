@@ -5,6 +5,7 @@ import { getSessionUser } from "@/lib/auth/guard";
 import type { SessionUser } from "@/lib/auth/session";
 import { getNavigation } from "@/components/app-nav";
 import { AppShell, type ShellUser } from "@/components/app-shell";
+import { ForceChangePasswordGate } from "@/components/force-change-password-gate";
 import { getUnreadNotificationCount } from "@/lib/services/notification";
 
 export const metadata: Metadata = {
@@ -27,8 +28,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AppShell user={shellUser} sections={sections} unreadCount={unreadCount}>
-      {children}
-    </AppShell>
+    <>
+      <ForceChangePasswordGate mustChangePassword={user.mustChangePassword} />
+      <AppShell user={shellUser} sections={sections} unreadCount={unreadCount}>
+        {children}
+      </AppShell>
+    </>
   );
 }

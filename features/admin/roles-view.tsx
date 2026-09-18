@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Plus, Save, Shield } from "lucide-react";
+import { Loader2, Plus, Save, Shield, Trash2 } from "lucide-react";
 import { MODULE_GROUPS } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { createRoleAction, assignRolePermissionsAction } from "./actions";
+import { createRoleAction, updateRoleAction, deleteRoleAction, assignRolePermissionsAction } from "./actions";
 import type { ActionState } from "@/lib/auth/action-guard";
 
 export interface RoleRow { id: string; code: string; name: string; description: string | null; isSystem: boolean }
@@ -52,9 +52,9 @@ const ACTION_LABELS: Record<string, string> = {
 
 function permissionLabel(code: string): string {
   const idx = code.indexOf(".");
-  const module = idx === -1 ? code : code.slice(0, idx);
+  const mod = idx === -1 ? code : code.slice(0, idx);
   const action = idx === -1 ? "" : code.slice(idx + 1);
-  const moduleLabel = module.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const moduleLabel = mod.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   return action ? `${moduleLabel} — ${ACTION_LABELS[action] ?? action}` : moduleLabel;
 }
 
@@ -67,13 +67,15 @@ export function RolesView({ roles, permissions, rolePermissionMap, canManage }: 
   const [showCreate, setShowCreate] = React.useState(false);
   const [createState, setCreateState] = React.useState<ActionState>({});
   const [createPending, setCreatePending] = React.useState(false);
+  const [showEdit, setShowEdit] = React.useState(false);
+  const [editState, setEditState] = React.useState<ActionState>({});
+  const [editPending, setEditPending] = React.useState(false);
+  const [showDelete, setShowDelete] = React.useState(false);
+  const [deleteState, setDeleteState] = React.useState<ActionState>({});
+  const [deletePending, setDeletePending] = React.useState(false);
 
   const selectedRole = roles.find((r) => r.id === selectedRoleId) ?? null;
   const permissionByCode = React.useMemo(() => new Map(permissions.map((p) => [p.code, p])), [permissions]);
-
-  React.useEffect(() => {
-    setSelected(new Set(rolePermissionMap[selectedRoleId ?? ""] ?? []));
-  }, [selectedRoleId, rolePermissionMap]);
 
   const initialPerms = rolePermissionMap[selectedRoleId ?? ""] ?? [];
   const changed = initialPerms.length !== selected.size || initialPerms.some((id) => !selected.has(id));
@@ -129,7 +131,7 @@ export function RolesView({ roles, permissions, rolePermissionMap, canManage }: 
               <Card
                 key={role.id}
                 className={cn("cursor-pointer p-4 transition-colors hover:bg-accent/50", selectedRoleId === role.id && "border-primary")}
-                onClick={() => setSelectedRoleId(role.id)}
+                onClick={() => { setSelectedRoleId(role.id); setSelected(new Set(rolePermissionMap[role.id] ?? [])); }}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-2">
@@ -153,12 +155,12 @@ export function RolesView({ roles, permissions, rolePermissionMap, canManage }: 
                 <p className="text-sm text-muted-foreground">Pilih peran di sebelah kiri untuk melihat dan mengelola hak aksesnya.</p>
               </div>
             </Card>
-          ) : selectedRole.code === "SUPER_ADMIN" ? (
+          ) : selectedRole.code === "SUPER_ADMIN" || selectedRole.code === "OWNER" ? (
             <Card className="flex min-h-[320px] items-center justify-center p-6">
               <div className="max-w-sm space-y-2 text-center">
                 <Shield className="mx-auto h-8 w-8 text-primary" />
                 <h3 className="font-semibold">{selectedRole.name}</h3>
-                <p className="text-sm text-muted-foreground">Role Super Admin memiliki semua akses dan tidak dapat diubah.</p>
+                <p className="text-sm text-muted-foreground">Role sistem utama memiliki semua akses dan tidak dapat diubah.</p>
               </div>
             </Card>
           ) : (
@@ -174,7 +176,15 @@ export function RolesView({ roles, permissions, rolePermissionMap, canManage }: 
                     {selectedRole.description ? <p className="truncate text-xs text-muted-foreground">{selectedRole.description}</p> : null}
                   </div>
                 </div>
-                <Badge variant="outline">{selected.size} izin</Badge>
+                <div className="flex items-center gap-2">
+                  {canManage && !selectedRole.isSystem ? (
+                    <>
+                      <Button type="button" variant="outline" size="sm" onClick={() => setShowEdit(true)}>Ubah</Button>
+                      <Button type="button" variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setShowDelete(true)}>Hapus</Button>
+                    </>
+                  ) : null}
+                  <Badge variant="outline">{selected.size} izin</Badge>
+                </div>
               </div>
 
               {!canManage ? <p className="mt-4 text-xs text-muted-foreground">Anda hanya dapat melihat hak akses peran ini.</p> : null}
@@ -245,6 +255,65 @@ export function RolesView({ roles, permissions, rolePermissionMap, canManage }: 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setShowCreate(false)} disabled={createPending}>Batal</Button>
               <Button type="submit" disabled={createPending}>{createPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Simpan</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showEdit} onOpenChange={(open) => { setShowEdit(open); if (!open) setEditState({}); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Ubah Role</DialogTitle></DialogHeader>
+          <form
+            action={async (fd) => {
+              setEditPending(true);
+              fd.set("roleId", selectedRole?.id ?? "");
+              const res = await updateRoleAction(editState, fd);
+              setEditPending(false);
+              setEditState(res);
+              if (res.success) {
+                toast.success("Role berhasil diubah");
+                setShowEdit(false);
+                router.refresh();
+              }
+            }}
+            className="space-y-4"
+          >
+            {editState.error ? <p className="rounded bg-destructive/10 p-2 text-sm text-destructive">{editState.error}</p> : null}
+            <div><Label className="text-xs">Nama Role</Label><Input name="name" required maxLength={128} defaultValue={selectedRole?.name ?? ""} className="mt-1" /></div>
+            <div><Label className="text-xs">Deskripsi (opsional)</Label><Textarea name="description" rows={3} defaultValue={selectedRole?.description ?? ""} className="mt-1" /></div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowEdit(false)} disabled={editPending}>Batal</Button>
+              <Button type="submit" disabled={editPending}>{editPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Simpan</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDelete} onOpenChange={(open) => { setShowDelete(open); if (!open) setDeleteState({}); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Hapus Role</DialogTitle></DialogHeader>
+          <form
+            action={async (fd) => {
+              setDeletePending(true);
+              fd.set("roleId", selectedRole?.id ?? "");
+              const res = await deleteRoleAction(deleteState, fd);
+              setDeletePending(false);
+              setDeleteState(res);
+              if (res.success) {
+                toast.success("Role berhasil dihapus");
+                setShowDelete(false);
+                router.refresh();
+              }
+            }}
+            className="space-y-4"
+          >
+            {deleteState.error ? <p className="rounded bg-destructive/10 p-2 text-sm text-destructive">{deleteState.error}</p> : null}
+            <p className="text-sm text-muted-foreground">
+              Hapus role <span className="font-medium text-foreground">{selectedRole?.name ?? ""}</span>? Tindakan ini tidak dapat dibatalkan. Role yang masih digunakan oleh pengguna tidak dapat dihapus.
+            </p>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowDelete(false)} disabled={deletePending}>Batal</Button>
+              <Button type="submit" variant="destructive" disabled={deletePending}>{deletePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Hapus</Button>
             </DialogFooter>
           </form>
         </DialogContent>

@@ -1,5 +1,6 @@
 import { and, eq, desc, sql } from "drizzle-orm";
 import { db } from "@/db";
+import { runInTransaction } from "@/db/transaction";
 import * as s from "@/db/schema";
 import type { SessionUser } from "@/lib/auth/session";
 import { NotFoundError, InvalidStateError, InsufficientStockError } from "@/lib/errors";
@@ -39,74 +40,90 @@ export async function getInvoice(user: SessionUser, id: string) {
 
 export async function createInvoiceForVisit(user: SessionUser, data: { visitId: string; items: Array<{ serviceItemId: string; description: string; quantity: number; unitPrice: number }> }) {
   if (!data.items || data.items.length === 0) throw new InvalidStateError("Minimal 1 item");
-  // Check if invoice already exists
-  const existing = await db().select().from(s.invoices).where(and(eq(s.invoices.visitId, data.visitId), eq(s.invoices.organizationId, user.organizationId))).limit(1);
-  if (existing.length > 0) throw new InvalidStateError("Sudah ada invoice untuk kunjungan ini");
 
-  const visitRows = await db().select().from(s.visits).where(eq(s.visits.id, data.visitId)).limit(1);
-  const visit = visitRows[0];
-  if (!visit) throw new InvalidStateError("Kunjungan tidak ditemukan");
+  const inv = await runInTransaction(async (tx) => {
+    // Kunci baris kunjungan: dua permintaan bersamaan akan terserialisasi,
+    // sehingga hanya satu invoice yang dapat dibuat per kunjungan.
+    const visitRows = await tx.select().from(s.visits).where(eq(s.visits.id, data.visitId)).for("update").limit(1);
+    const visit = visitRows[0];
+    if (!visit) throw new InvalidStateError("Kunjungan tidak ditemukan");
 
-  let totalAmount = 0;
-  for (const i of data.items) totalAmount += Number(i.unitPrice) * i.quantity;
+    const existing = await tx.select().from(s.invoices).where(and(eq(s.invoices.visitId, data.visitId), eq(s.invoices.organizationId, user.organizationId))).limit(1);
+    if (existing.length > 0) throw new InvalidStateError("Sudah ada invoice untuk kunjungan ini");
 
-  const number = `INV-${Date.now()}`;
-  const [inv] = await db().insert(s.invoices).values({
-    organizationId: user.organizationId, branchId: user.branchId ?? "", patientId: visit.patientId, visitId: data.visitId, invoiceNumber: number, invoiceDate: visit.visitDate, status: "ISSUED", total: String(totalAmount), paidAmount: "0",
-  }).returning({ id: s.invoices.id });
+    let totalAmount = 0;
+    for (const i of data.items) totalAmount += Number(i.unitPrice) * i.quantity;
 
-  for (const item of data.items) {
-    const subtotal = String(Number(item.unitPrice) * item.quantity);
-    await db().insert(s.invoiceItems).values({ invoiceId: inv.id, itemType: "SERVICE", referenceId: item.serviceItemId, description: item.description, quantity: item.quantity, unitPrice: String(item.unitPrice), subtotal, discount: "0" });
-  }
+    const number = `INV-${Date.now()}`;
+    const [created] = await tx.insert(s.invoices).values({
+      organizationId: user.organizationId, branchId: user.branchId ?? "", patientId: visit.patientId, visitId: data.visitId, invoiceNumber: number, invoiceDate: visit.visitDate, status: "ISSUED", total: String(totalAmount), paidAmount: "0",
+    }).returning({ id: s.invoices.id });
 
-  await writeAuditLog({ user, action: "CREATE", entityType: "invoices", entityId: inv.id, newData: { number, totalAmount, itemCount: data.items.length } });
-  return inv;
+    for (const item of data.items) {
+      const subtotal = String(Number(item.unitPrice) * item.quantity);
+      await tx.insert(s.invoiceItems).values({ invoiceId: created.id, itemType: "SERVICE", referenceId: item.serviceItemId, description: item.description, quantity: item.quantity, unitPrice: String(item.unitPrice), subtotal, discount: "0" });
+    }
+
+    return { id: created.id, number, totalAmount: String(totalAmount) };
+  });
+
+  await writeAuditLog({ user, action: "CREATE", entityType: "invoices", entityId: inv.id, newData: { number: inv.number, totalAmount: inv.totalAmount, itemCount: data.items.length } });
+  return { id: inv.id };
 }
 
 export async function processPayment(user: SessionUser, data: { invoiceId: string; method: string; amount: string; reference?: string }) {
-  const rows = await db().select().from(s.invoices).where(and(eq(s.invoices.id, data.invoiceId), eq(s.invoices.organizationId, user.organizationId))).limit(1);
-  const inv = rows[0];
-  if (!inv) throw new NotFoundError("Invoice tidak ditemukan");
-  if (inv.status === "VOID") throw new InvalidStateError("Invoice sudah void");
-  if (inv.status === "REFUNDED") throw new InvalidStateError("Invoice sudah di-refund");
-  const amountNum = Number(data.amount);
-  const paidNum = Number(inv.paidAmount);
-  const totalNum = Number(inv.total);
-  if (amountNum <= 0) throw new InvalidStateError("Jumlah pembayaran harus positif");
-  if (paidNum + amountNum > totalNum) throw new InvalidStateError(`Melebihi total tagihan (sisa: ${totalNum - paidNum})`);
+  const payment = await runInTransaction(async (tx) => {
+    // Kunci baris invoice sehingga pembayaran paralel terserialisasi
+    // dan tidak ada overpay / lost update.
+    const rows = await tx.select().from(s.invoices).where(and(eq(s.invoices.id, data.invoiceId), eq(s.invoices.organizationId, user.organizationId))).for("update").limit(1);
+    const inv = rows[0];
+    if (!inv) throw new NotFoundError("Invoice tidak ditemukan");
+    if (inv.status === "VOID") throw new InvalidStateError("Invoice sudah void");
+    if (inv.status === "REFUNDED") throw new InvalidStateError("Invoice sudah di-refund");
+    const amountNum = Number(data.amount);
+    const paidNum = Number(inv.paidAmount);
+    const totalNum = Number(inv.total);
+    if (amountNum <= 0) throw new InvalidStateError("Jumlah pembayaran harus positif");
+    if (paidNum + amountNum > totalNum) throw new InvalidStateError(`Melebihi total tagihan (sisa: ${totalNum - paidNum})`);
 
-  const [payment] = await db().insert(s.payments).values({
-    organizationId: user.organizationId, branchId: user.branchId ?? "", invoiceId: data.invoiceId, paymentNumber: `PAY-${Date.now()}`, paymentMethod: data.method, amount: data.amount, referenceNumber: data.reference ?? null, status: "COMPLETED", receivedBy: user.id,
-  }).returning({ id: s.payments.id });
+    const [paymentRow] = await tx.insert(s.payments).values({
+      organizationId: user.organizationId, branchId: user.branchId ?? "", invoiceId: data.invoiceId, paymentNumber: `PAY-${Date.now()}`, paymentMethod: data.method, amount: data.amount, referenceNumber: data.reference ?? null, status: "COMPLETED", receivedBy: user.id,
+    }).returning({ id: s.payments.id });
 
-  const newPaid = String(paidNum + amountNum);
-  const newStatus = paidNum + amountNum >= totalNum ? "PAID" : "PARTIAL_PAID";
-  await db().update(s.invoices).set({ paidAmount: newPaid, status: newStatus, updatedAt: new Date() }).where(eq(s.invoices.id, data.invoiceId));
+    const newPaid = String(paidNum + amountNum);
+    const newStatus = paidNum + amountNum >= totalNum ? "PAID" : "PARTIAL_PAID";
+    await tx.update(s.invoices).set({ paidAmount: newPaid, status: newStatus, updatedAt: new Date() }).where(eq(s.invoices.id, data.invoiceId));
 
-  await writeAuditLog({ user, action: "PROCESS_PAYMENT", entityType: "invoices", entityId: data.invoiceId, newData: { paymentId: payment.id, method: data.method, amount: data.amount, newPaidAmount: newPaid } });
-  return payment;
+    return { id: paymentRow.id, newPaidAmount: newPaid };
+  });
+
+  await writeAuditLog({ user, action: "PROCESS_PAYMENT", entityType: "invoices", entityId: data.invoiceId, newData: { paymentId: payment.id, method: data.method, amount: data.amount, newPaidAmount: payment.newPaidAmount } });
+  return { id: payment.id };
 }
 
 export async function processRefund(user: SessionUser, data: { invoiceId: string; amount: string; reason: string }) {
-  const rows = await db().select().from(s.invoices).where(and(eq(s.invoices.id, data.invoiceId), eq(s.invoices.organizationId, user.organizationId))).limit(1);
-  const inv = rows[0];
-  if (!inv) throw new NotFoundError("Invoice tidak ditemukan");
-  if (inv.status === "VOID") throw new InvalidStateError("Invoice sudah void");
-  const amountNum = Number(data.amount);
-  if (amountNum <= 0) throw new InvalidStateError("Jumlah refund harus positif");
-  if (amountNum > Number(inv.paidAmount)) throw new InvalidStateError("Melebihi jumlah yang sudah dibayar");
+  const refund = await runInTransaction(async (tx) => {
+    const rows = await tx.select().from(s.invoices).where(and(eq(s.invoices.id, data.invoiceId), eq(s.invoices.organizationId, user.organizationId))).for("update").limit(1);
+    const inv = rows[0];
+    if (!inv) throw new NotFoundError("Invoice tidak ditemukan");
+    if (inv.status === "VOID") throw new InvalidStateError("Invoice sudah void");
+    const amountNum = Number(data.amount);
+    if (amountNum <= 0) throw new InvalidStateError("Jumlah refund harus positif");
+    if (amountNum > Number(inv.paidAmount)) throw new InvalidStateError("Melebihi jumlah yang sudah dibayar");
 
-  const [refund] = await db().insert(s.payments).values({
-    organizationId: user.organizationId, branchId: user.branchId ?? "", invoiceId: data.invoiceId, paymentNumber: `REF-${Date.now()}`, paymentMethod: "REFUND", amount: `-${data.amount}`, referenceNumber: data.reason, status: "COMPLETED", receivedBy: user.id,
-  }).returning({ id: s.payments.id });
+    const [refundRow] = await tx.insert(s.payments).values({
+      organizationId: user.organizationId, branchId: user.branchId ?? "", invoiceId: data.invoiceId, paymentNumber: `REF-${Date.now()}`, paymentMethod: "REFUND", amount: `-${data.amount}`, referenceNumber: data.reason, status: "COMPLETED", receivedBy: user.id,
+    }).returning({ id: s.payments.id });
 
-  const newPaid = String(Number(inv.paidAmount) - amountNum);
-  const newStatus = Number(newPaid) <= 0 ? "REFUNDED" : "PARTIAL_PAID";
-  await db().update(s.invoices).set({ paidAmount: newPaid, status: newStatus, updatedAt: new Date() }).where(eq(s.invoices.id, data.invoiceId));
+    const newPaid = String(Number(inv.paidAmount) - amountNum);
+    const newStatus = Number(newPaid) <= 0 ? "REFUNDED" : "PARTIAL_PAID";
+    await tx.update(s.invoices).set({ paidAmount: newPaid, status: newStatus, updatedAt: new Date() }).where(eq(s.invoices.id, data.invoiceId));
+
+    return { id: refundRow.id, newPaidAmount: newPaid };
+  });
 
   await writeAuditLog({ user, action: "PROCESS_REFUND", entityType: "invoices", entityId: data.invoiceId, newData: { refundId: refund.id, amount: data.amount, reason: data.reason } });
-  return refund;
+  return { id: refund.id };
 }
 
 export async function listServiceItems(user: SessionUser) {

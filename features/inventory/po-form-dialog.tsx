@@ -26,7 +26,13 @@ export function PurchaseOrderFormDialog({ suppliers, medications }: Props) {
   const [pending, setPending] = React.useState(false);
   const [items, setItems] = React.useState<Array<{ medicationId: string; quantity: number; unitPrice: number }>>([{ medicationId: "", quantity: 1, unitPrice: 0 }]);
 
-  React.useEffect(() => { if (open) { setState({}); setItems([{ medicationId: "", quantity: 1, unitPrice: 0 }]); } }, [open]);
+  function handleOpenChange(open: boolean) {
+    if (!open) {
+      setState({});
+      setItems([{ medicationId: "", quantity: 1, unitPrice: 0 }]);
+    }
+    setOpen(open);
+  }
 
   function updateItem(idx: number, patch: Partial<typeof items[number]>) {
     setItems((prev) => prev.map((item, i) => i === idx ? { ...item, ...patch } : item));
@@ -53,7 +59,7 @@ export function PurchaseOrderFormDialog({ suppliers, medications }: Props) {
   return (
     <>
       <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-1" /> Buat PO</Button>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Buat Purchase Order</DialogTitle>

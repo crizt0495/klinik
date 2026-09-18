@@ -269,11 +269,11 @@ describe("alur end-to-end: pasien → appointment → kunjungan → RM → resep
     const permRow = await db().select({ id: s.permissions.id }).from(s.permissions).where(eq(s.permissions.code, "billing.view")).limit(1);
     expect(permRow[0]).toBeDefined();
     const billingViewId = permRow[0].id;
-    const permsBefore = (await getRolePermissions(kasirRole!.id)).map((p) => p.permissionId);
+    const permsBefore = (await getRolePermissions(admin, kasirRole!.id)).map((p) => p.permissionId);
     if (!permsBefore.includes(billingViewId)) {
       await assignRolePermissions(admin, kasirRole!.id, [...permsBefore, billingViewId]);
     }
-    expect((await getRolePermissions(kasirRole!.id)).some((p) => p.permissionId === billingViewId)).toBe(true);
+    expect((await getRolePermissions(admin, kasirRole!.id)).some((p) => p.permissionId === billingViewId)).toBe(true);
     const users = await listUsers(admin);
     expect(users.some((u) => u.username === "e2e.user")).toBe(true);
   });

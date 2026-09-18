@@ -3,12 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { getActionUser, type ActionState } from "@/lib/auth/action-guard";
 import { toAppError } from "@/lib/errors";
-import { createUser, createRole, assignRolePermissions, assignUserRole } from "./service";
+import { createUser, createRole, updateRole, deleteRole, assignRolePermissions, assignUserRole } from "./service";
 import { parseZod } from "@/lib/validation";
 import { z } from "zod/v4";
 
 const createUserSchema = z.object({ username: z.string().min(3).max(50), fullName: z.string().min(1), email: z.string().email().optional(), password: z.string().min(8) });
 const createRoleSchema = z.object({ name: z.string().trim().min(1).max(128), description: z.string().trim().max(1000).optional() });
+const updateRoleSchema = z.object({ roleId: z.string().uuid(), name: z.string().trim().min(1).max(128), description: z.string().trim().max(1000).optional() });
+const deleteRoleSchema = z.object({ roleId: z.string().uuid() });
 
 export async function createUserAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   try {
@@ -25,6 +27,26 @@ export async function createRoleAction(_prev: ActionState, fd: FormData): Promis
     const user = await getActionUser("roles.manage");
     const input = parseZod(createRoleSchema, Object.fromEntries(fd));
     await createRole(user, input);
+    revalidatePath("/admin/roles");
+    return { success: true };
+  } catch (err) { return { error: toAppError(err).message }; }
+}
+
+export async function updateRoleAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  try {
+    const user = await getActionUser("roles.manage");
+    const input = parseZod(updateRoleSchema, Object.fromEntries(fd));
+    await updateRole(user, input.roleId, { name: input.name, description: input.description });
+    revalidatePath("/admin/roles");
+    return { success: true };
+  } catch (err) { return { error: toAppError(err).message }; }
+}
+
+export async function deleteRoleAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  try {
+    const user = await getActionUser("roles.manage");
+    const input = parseZod(deleteRoleSchema, Object.fromEntries(fd));
+    await deleteRole(user, input.roleId);
     revalidatePath("/admin/roles");
     return { success: true };
   } catch (err) { return { error: toAppError(err).message }; }
