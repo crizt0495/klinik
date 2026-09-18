@@ -11,4 +11,4 @@ export async function getActionUser(permission: string): Promise<SessionUser> {
   return user;
 }
 
-export type ActionState = { success?: boolean; error?: string };
+export type ActionState = { success?: boolean; error?: string; data?: unknown };

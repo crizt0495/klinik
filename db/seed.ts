@@ -2,6 +2,7 @@ import { hashPassword } from "../lib/auth/password";
 import { ROLE_DEFINITIONS } from "../lib/permissions";
 import { applyLocalMigrations, getDb, resolveDriver } from "../db";
 import * as schema from "../db/schema";
+import { and, eq } from "drizzle-orm";
 import { join } from "path";
 
 const PERMISSION_NAMES = new Set<string>();
@@ -28,6 +29,38 @@ export async function isSeeded(): Promise<boolean> {
   return rows.length > 0;
 }
 
+/**
+ * Idempotently syncs the permission catalog and grants new permissions to
+ * existing roles based on ROLE_DEFINITIONS. Runs on every seed invocation so
+ * newly added permissions/modules are provisioned even on already-seeded DBs.
+ */
+export async function syncPermissionCatalog(): Promise<void> {
+  const db = getDb();
+  const permIdMap = new Map<string, string>();
+  const existingPerms = await db.select({ id: schema.permissions.id, code: schema.permissions.code }).from(schema.permissions);
+  for (const p of existingPerms) permIdMap.set(p.code, p.id);
+
+  const missingPerms = [...PERMISSION_NAMES].filter((p) => !permIdMap.has(p));
+  if (missingPerms.length > 0) {
+    const insPerms = await db.insert(schema.permissions).values(missingPerms.map((p) => ({ code: p, module: p.split(".")[0] ?? "general", name: p }))).returning({ id: schema.permissions.id, code: schema.permissions.code });
+    for (const p of insPerms) permIdMap.set(p.code, p.id);
+  }
+
+  const roles = await db.select().from(schema.roles);
+  for (const role of roles) {
+    const def = ROLE_DEFINITIONS[role.code];
+    if (!def) continue;
+    for (const perm of def.permissions) {
+      const permId = permIdMap.get(perm);
+      if (!permId) continue;
+      const exists = await db.select({ roleId: schema.rolePermissions.roleId }).from(schema.rolePermissions).where(and(eq(schema.rolePermissions.roleId, role.id), eq(schema.rolePermissions.permissionId, permId))).limit(1);
+      if (exists.length === 0) {
+        await db.insert(schema.rolePermissions).values({ roleId: role.id, permissionId: permId });
+      }
+    }
+  }
+}
+
 export async function runSeed(): Promise<void> {
   const driver = resolveDriver();
   if (driver === "pglite") {
@@ -35,7 +68,9 @@ export async function runSeed(): Promise<void> {
   }
   const db = getDb();
 
-  if (await isSeeded()) {
+  const seeded = await isSeeded();
+  await syncPermissionCatalog();
+  if (seeded) {
     return;
   }
 
@@ -73,13 +108,8 @@ export async function runSeed(): Promise<void> {
   for (const r of insertedRoles) roleIds.set(r.code, r.id);
 
   const permIdMap = new Map<string, string>();
-  const existingPerms = await db.select().from(schema.permissions);
+  const existingPerms = await db.select({ id: schema.permissions.id, code: schema.permissions.code }).from(schema.permissions);
   for (const p of existingPerms) permIdMap.set(p.code, p.id);
-  const missingPerms = [...PERMISSION_NAMES].filter((p) => !permIdMap.has(p));
-  if (missingPerms.length > 0) {
-    const insPerms = await db.insert(schema.permissions).values(missingPerms.map((p) => ({ code: p, module: p.split(".")[0] ?? "general", name: p }))).returning();
-    for (const p of insPerms) permIdMap.set(p.code, p.id);
-  }
 
   const rpValues: { roleId: string; permissionId: string }[] = [];
   for (const [roleCode, def] of Object.entries(ROLE_DEFINITIONS)) {
@@ -184,6 +214,11 @@ export async function runSeed(): Promise<void> {
   ]);
 
   await db.insert(schema.insuranceProviders).values([{ organizationId, code: "BPJS", name: "BPJS Kesehatan", phone: "1500400", status: "ACTIVE" }, { organizationId, code: "PRI", name: "Asuransi Prima", status: "ACTIVE" }]);
+
+  await db
+    .insert(schema.bpjsSettings)
+    .values({ organizationId: org[0].id, enabled: false, mockMode: true, faskesName: "Klinik Sehat" })
+    .onConflictDoNothing();
 }
 
 export async function bootstrapSeed(): Promise<void> {

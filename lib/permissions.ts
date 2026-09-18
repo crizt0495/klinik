@@ -60,6 +60,15 @@ export const PERMISSIONS = [
   "settings.view",
   "settings.manage",
   "audit_logs.view",
+  "bpjs.view",
+  "bpjs.check",
+  "bpjs.manage_sep",
+  "bpjs.cancel_sep",
+  "bpjs.view_referrals",
+  "bpjs.manage_referrals",
+  "bpjs.create_claim",
+  "bpjs.submit_claim",
+  "bpjs.manage_settings",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -83,6 +92,7 @@ export const MODULE_GROUPS: Record<string, readonly string[]> = {
   "Peran": ["roles.view", "roles.manage"],
   "Pengaturan": ["settings.view", "settings.manage"],
   "Audit": ["audit_logs.view"],
+  "BPJS Kesehatan": ["bpjs.view", "bpjs.check", "bpjs.manage_sep", "bpjs.cancel_sep", "bpjs.view_referrals", "bpjs.manage_referrals", "bpjs.create_claim", "bpjs.submit_claim", "bpjs.manage_settings"],
 };
 
 export const ROLE_DEFINITIONS: Record<string, { name: string; description: string; permissions: readonly string[] }> = {
@@ -118,6 +128,7 @@ export const ROLE_DEFINITIONS: Record<string, { name: string; description: strin
       "roles.view",
       "settings.view", "settings.manage",
       "audit_logs.view",
+      "bpjs.view", "bpjs.check", "bpjs.manage_sep", "bpjs.cancel_sep", "bpjs.view_referrals", "bpjs.manage_referrals", "bpjs.create_claim", "bpjs.submit_claim", "bpjs.manage_settings",
     ],
   },
   DOKTER: {
@@ -134,6 +145,7 @@ export const ROLE_DEFINITIONS: Record<string, { name: string; description: strin
       "radiology.view", "radiology.create",
       "billing.view",
       "reports.view",
+      "bpjs.view", "bpjs.check", "bpjs.view_referrals",
     ],
   },
   PERAWAT: {
@@ -149,6 +161,7 @@ export const ROLE_DEFINITIONS: Record<string, { name: string; description: strin
       "laboratory.view",
       "radiology.view",
       "reports.view",
+      "bpjs.view",
     ],
   },
   RESEPSIONIS: {
@@ -159,6 +172,7 @@ export const ROLE_DEFINITIONS: Record<string, { name: string; description: strin
       "appointments.view", "appointments.create", "appointments.update", "appointments.cancel",
       "queue.view", "queue.create", "queue.call", "queue.skip", "queue.complete",
       "billing.view",
+      "bpjs.view", "bpjs.check", "bpjs.manage_sep", "bpjs.cancel_sep", "bpjs.view_referrals", "bpjs.manage_referrals",
     ],
   },
   APOTEKER: {
@@ -181,6 +195,7 @@ export const ROLE_DEFINITIONS: Record<string, { name: string; description: strin
       "billing.view", "billing.create", "billing.update", "billing.void",
       "payments.view", "payments.create", "payments.refund",
       "reports.view",
+      "bpjs.view", "bpjs.create_claim", "bpjs.submit_claim",
     ],
   },
   PETUGAS_LAB: {
@@ -221,6 +236,7 @@ export const ROLE_DEFINITIONS: Record<string, { name: string; description: strin
       "users.view",
       "roles.view",
       "audit_logs.view",
+      "bpjs.view", "bpjs.check", "bpjs.view_referrals", "bpjs.create_claim", "bpjs.submit_claim",
     ],
   },
 };

@@ -92,6 +92,17 @@ export function getNavigation(user: { permissions: Set<string>; isSuperAdmin: bo
       ],
     },
     {
+      title: "BPJS Kesehatan",
+      items: [
+        { title: "Dashboard BPJS", href: "/bpjs", icon: "shield-check", permission: "bpjs.view", exact: true },
+        { title: "Cek Peserta", href: "/bpjs/participants", icon: "users", permission: "bpjs.check" },
+        { title: "SEP", href: "/bpjs/sep", icon: "file-text", permission: "bpjs.manage_sep" },
+        { title: "Rujukan", href: "/bpjs/referrals", icon: "calendar-days", permission: "bpjs.view_referrals" },
+        { title: "Klaim", href: "/bpjs/claims", icon: "receipt", permission: "bpjs.create_claim" },
+        { title: "Pengaturan BPJS", href: "/bpjs/settings", icon: "settings", permission: "bpjs.manage_settings" },
+      ],
+    },
+    {
       title: "Laporan",
       items: [{ title: "Laporan", href: "/reports", icon: "bar-chart-3", permission: "reports.view" }],
     },

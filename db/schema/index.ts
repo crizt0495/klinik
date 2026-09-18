@@ -6,3 +6,4 @@ export * from "./pharmacy";
 export * from "./purchasing";
 export * from "./diagnostics";
 export * from "./billing";
+export * from "./bpjs";

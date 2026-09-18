@@ -109,6 +109,14 @@ export const STATUS_LABEL: Record<string, string> = {
   ACTIVE: "Aktif",
   INACTIVE: "Nonaktif",
   SUSPENDED: "Ditangguhkan",
+  INSERTED: "Tersimpan",
+  UPDATED: "Diperbarui",
+  FAILED: "Gagal",
+  SUCCESS: "Aktif",
+  ACCEPTED: "Diterima",
+  PARTIALLY_ACCEPTED: "Diterima Sebagian",
+  USED: "Terpakai",
+  EXPIRED: "Kadaluarsa",
 };
 
 export const BADGE_VARIANT: Record<string, "default" | "secondary" | "success" | "warning" | "destructive" | "outline"> = {
@@ -124,6 +132,10 @@ export const BADGE_VARIANT: Record<string, "default" | "secondary" | "success" |
   CONFIRMED: "success",
   CHECKED_IN: "success",
   RECEIVED: "success",
+  INSERTED: "success",
+  ACCEPTED: "success",
+  SUCCESS: "success",
+  USED: "success",
 
   WAITING: "warning",
   PENDING: "warning",
@@ -142,6 +154,8 @@ export const BADGE_VARIANT: Record<string, "default" | "secondary" | "success" |
   REQUESTED: "warning",
   PARTIALLY_REFUNDED: "warning",
   AMENDED: "warning",
+  UPDATED: "warning",
+  PARTIALLY_ACCEPTED: "warning",
 
   CANCELLED: "destructive",
   VOID: "destructive",
@@ -151,6 +165,7 @@ export const BADGE_VARIANT: Record<string, "default" | "secondary" | "success" |
   SUSPENDED: "destructive",
   INACTIVE: "destructive",
   SKIPPED: "secondary",
+  FAILED: "destructive",
 
   CALLED: "default",
   FULL: "default",
