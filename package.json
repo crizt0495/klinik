@@ -17,7 +17,8 @@
     "e2e:seed": "tsx scripts/e2e-local.ts seed",
     "e2e:run": "tsx scripts/e2e-local.ts run",
     "e2e:cleanup": "tsx scripts/e2e-local.ts cleanup",
-    "e2e:bpjs": "tsx scripts/e2e-bpjs-settings.ts"
+    "e2e:bpjs": "tsx scripts/e2e-bpjs-settings.ts",
+    "e2e:mobile": "tsx scripts/mobile-layout-check.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.4.2",
