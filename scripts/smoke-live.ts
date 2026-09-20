@@ -1,7 +1,8 @@
 import { config as loadEnv } from "dotenv";
 loadEnv({ path: ".env.local" });
 process.env.DB_DRIVER = "";
-process.env.NODE_ENV = process.env.NODE_ENV ?? "development";
+// Next.js types declare NODE_ENV as read-only; assign via the mutable index signature.
+(process.env as Record<string, string | undefined>).NODE_ENV = process.env.NODE_ENV ?? "development";
 
 import { chromium } from "playwright";
 import { db } from "../db";

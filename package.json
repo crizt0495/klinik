@@ -12,7 +12,6 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx scripts/seed.ts",
-    "db:check": "tsx scripts/db-check.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -65,6 +64,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "pg": "^8.23.0",
+    "playwright": "^1.63.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
     "typescript": "^5",
