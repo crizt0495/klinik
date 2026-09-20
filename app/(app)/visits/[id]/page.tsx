@@ -4,7 +4,7 @@ import { getSessionUser, assertCan } from "@/lib/auth/guard";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { getVisit, listDiagnoses, listProcedures, listMedications } from "@/features/visits/service";
-import { VisitDetail, type VisitDetailData, type MasterOptions } from "@/features/visits/visit-detail";
+import { VisitDetail, type VisitDetailData } from "@/features/visits/visit-detail";
 
 export const metadata: Metadata = { title: "Detail Kunjungan" };
 

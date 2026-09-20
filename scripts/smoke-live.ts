@@ -42,14 +42,12 @@ async function cleanup(username: string) {
   }
 }
 
-const T = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 async function main() {
   const rnd = Math.random().toString(36).slice(2, 8);
   const normalUser = `${PREFIX}_normal_${rnd}`;
   const forcedUser = `${PREFIX}_forced_${rnd}`;
   await seedUser(normalUser, "Smoke@2026pass", false);
-  const forced = await seedUser(forcedUser, "Smoke@2026pass", true);
+  await seedUser(forcedUser, "Smoke@2026pass", true);
 
   const browser = await chromium.launch({ executablePath: "/usr/bin/google-chrome", headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage"] });
   const results: string[] = [];

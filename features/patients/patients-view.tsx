@@ -8,7 +8,7 @@ import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { formatDate, genderLabel, ageFromBirthDate } from "@/lib/utils";
+import { genderLabel, ageFromBirthDate } from "@/lib/utils";
 import { PatientFormDialog, type PatientFormValue } from "./patient-form-dialog";
 import { deletePatientAction } from "./actions";
 

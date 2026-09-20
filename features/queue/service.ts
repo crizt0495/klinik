@@ -1,4 +1,4 @@
-import { and, eq, isNull, desc, sql, inArray } from "drizzle-orm";
+import { and, eq, isNull, sql, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import * as s from "@/db/schema";
 import type { SessionUser } from "@/lib/auth/session";

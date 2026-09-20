@@ -82,7 +82,7 @@ export async function listRoles(user: SessionUser) {
   return db().select().from(s.roles).where(eq(s.roles.organizationId, user.organizationId)).orderBy(asc(s.roles.name));
 }
 
-export async function listPermissions(user: SessionUser) {
+export async function listPermissions() {
   return db().select({ id: s.permissions.id, code: s.permissions.code, module: s.permissions.module }).from(s.permissions).orderBy(asc(s.permissions.code));
 }
 

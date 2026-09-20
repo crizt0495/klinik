@@ -38,7 +38,7 @@ export default async function VisitsPage({ searchParams }: { searchParams: Promi
         </div>
         <button type="submit" className="inline-flex h-9 items-center rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90">Filter</button>
       </form>
-      <VisitsView visits={visits} canRegister={canRegister} />
+      <VisitsView visits={visits} />
     </div>
   );
 }

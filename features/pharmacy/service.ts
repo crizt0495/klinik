@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { runInTransaction } from "@/db/transaction";
 import * as s from "@/db/schema";
 import type { SessionUser } from "@/lib/auth/session";
-import { NotFoundError, InsufficientStockError, InvalidStateError, ConflictError } from "@/lib/errors";
+import { NotFoundError, InsufficientStockError, InvalidStateError } from "@/lib/errors";
 import { writeAuditLog, writeActivityLog } from "@/lib/services/audit";
 
 export async function listPrescriptions(user: SessionUser, status?: string) {

@@ -1,4 +1,4 @@
-import { and, eq, lte, or, ilike, desc, sql } from "drizzle-orm";
+import { and, eq, lte, desc, sql } from "drizzle-orm";
 import { db } from "@/db";
 import * as s from "@/db/schema";
 import type { SessionUser } from "@/lib/auth/session";
@@ -143,7 +143,6 @@ async function assertDoctorSchedule(user: SessionUser, doctorId: string, departm
 
 export async function createAppointment(user: SessionUser, input: AppointmentInput) {
   if (input.endTime <= input.startTime) throw new ValidationError("Waktu selesai harus setelah waktu mulai");
-  const dayOfWeek = new Date(`${input.appointmentDate}T00:00:00`).getDay();
   await assertDoctorSchedule(user, input.doctorId, input.departmentId, input.appointmentDate, input.startTime, input.endTime);
 
   // Doctor double-booking check (overlapping active appointments)

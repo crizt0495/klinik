@@ -4,7 +4,7 @@ import { runInTransaction } from "@/db/transaction";
 import * as s from "@/db/schema";
 import type { SessionUser } from "@/lib/auth/session";
 import { NotFoundError, InvalidStateError } from "@/lib/errors";
-import { writeAuditLog, writeActivityLog } from "@/lib/services/audit";
+import { writeAuditLog } from "@/lib/services/audit";
 
 export async function listInventory(user: SessionUser) {
   return db()

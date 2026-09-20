@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { getSessionUser, assertCan } from "@/lib/auth/guard";
 import { PageHeader } from "@/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { listInventory, listPurchaseOrders, listSuppliers } from "@/features/inventory/service";
 import { listMedications } from "@/features/appointments/service";
 import { InventoryView } from "@/features/inventory/inventory-view";
@@ -12,7 +11,7 @@ import { StockOpnameForm } from "@/features/inventory/stock-opname-form";
 
 export const metadata: Metadata = { title: "Inventori" };
 
-export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+export default async function InventoryPage() {
   const user = await getSessionUser();
   assertCan(user, "inventory.view");
   const canManage = user.isSuperAdmin || user.permissions.has("inventory.opname");

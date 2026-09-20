@@ -22,7 +22,7 @@ describe("modul administrasi (pengguna & peran)", () => {
   });
 
   it("2. listPermissions memuat permission inti", async () => {
-    const perms = await listPermissions(admin);
+    const perms = await listPermissions();
     const codes = perms.map((p) => p.code);
     expect(codes).toContain("patients.view");
     expect(codes).toContain("billing.view");
@@ -78,7 +78,7 @@ describe("modul administrasi (pengguna & peran)", () => {
 
   it("10. assignRolePermissions menetapkan permission ke peran", async () => {
     const role = await createRole(admin, { name: `Peran Perm ${Date.now()}` });
-    const perms = await listPermissions(admin);
+    const perms = await listPermissions();
     const target = perms.filter((p) => ["patients.view", "billing.view"].includes(p.code)).map((p) => p.id);
     await assignRolePermissions(admin, role.id, target);
     const assigned = (await getRolePermissions(admin, role.id)).map((p) => p.permissionId).sort();

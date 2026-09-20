@@ -2,9 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
-import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 import { formatDate } from "@/lib/utils";
 
@@ -24,10 +22,9 @@ export interface VisitRow {
 
 interface Props {
   visits: VisitRow[];
-  canRegister: boolean;
 }
 
-export function VisitsView({ visits, canRegister }: Props) {
+export function VisitsView({ visits }: Props) {
   const router = useRouter();
   const columns: DataTableColumn<VisitRow>[] = [
     { id: "visitNumber", header: "No. Kunjungan", accessorFn: (r) => r.visitNumber, cell: (ctx) => <span className="font-medium">{ctx.row.original.visitNumber}</span> },

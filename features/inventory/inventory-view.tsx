@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatIDR } from "@/lib/utils";
@@ -21,7 +20,6 @@ export interface InventoryRow {
 }
 
 export function InventoryView({ items }: { items: InventoryRow[] }) {
-  const router = useRouter();
   const today = new Date().toISOString().slice(0, 10);
   const columns: DataTableColumn<InventoryRow>[] = [
     { id: "medicationName", header: "Obat", cell: (ctx) => <div><p className="font-medium">{ctx.row.original.medicationName}</p><p className="text-xs text-muted-foreground">{ctx.row.original.medicationCode}</p></div> },

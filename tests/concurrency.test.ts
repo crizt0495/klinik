@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { initDb } from "./helpers/db";
 import { db } from "@/db";
 import * as s from "@/db/schema";
-import { and, eq, asc } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { loginWithPassword } from "@/lib/auth/login";
 import type { SessionUser } from "@/lib/auth/session";
 import { createPatient } from "@/features/patients/service";
@@ -81,7 +81,7 @@ describe("konsistensi & anti race (transactional)", () => {
   });
 
   it("3. invoice per kunjungan hanya satu (duplikat ditolak)", async () => {
-    const { patient, visit } = await newCase("Race Invoice Ganda");
+    const { visit } = await newCase("Race Invoice Ganda");
     const first = await createInvoiceForVisit(receptionist, { visitId: visit.id, items: [{ serviceItemId: crypto.randomUUID(), description: "Konsultasi", quantity: 1, unitPrice: 50000 }] });
     expect(first.id).toBeTruthy();
     await expect(createInvoiceForVisit(receptionist, { visitId: visit.id, items: [{ serviceItemId: crypto.randomUUID(), description: "Konsultasi", quantity: 1, unitPrice: 50000 }] })).rejects.toThrow(InvalidStateError);
@@ -120,7 +120,7 @@ describe("konsistensi & anti race (transactional)", () => {
   });
 
   it("6. opname stok mempertahankan nilai terakhir secara atomik", async () => {
-    const { patient, visit } = await newCase("Race Opname");
+    await newCase("Race Opname");
     const med = await newMedication("RACEOPNAME");
     const batchId = await addBatch(med, "2027-01-01", 10);
     await createStockOpname(pharmacist, med, batchId, 7);
@@ -131,7 +131,7 @@ describe("konsistensi & anti race (transactional)", () => {
 
   it("7. transaksi pembayaran & invoice mempertahankan jalur yang konsisten", async () => {
     // Refund protection: refund tidak boleh melebihi yang sudah dibayar
-    const { patient, visit } = await newCase("Race Refund");
+    const { visit } = await newCase("Race Refund");
     const inv = await createInvoiceForVisit(receptionist, { visitId: visit.id, items: [{ serviceItemId: crypto.randomUUID(), description: "Tindakan", quantity: 1, unitPrice: 100000 }] });
     await expect(processPayment(receptionist, { invoiceId: inv.id, method: "TUNAI", amount: "100001" })).rejects.toThrow(InvalidStateError);
   });

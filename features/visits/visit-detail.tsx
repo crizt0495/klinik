@@ -12,10 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/status-badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ConfirmDialog } from "@/components/confirm-dialog";
-import { formatDate, formatIDR, genderLabel, ageFromBirthDate } from "@/lib/utils";
-import { formatTime } from "@/lib/utils";
-import { startVisitAction, completeVisitAction, cancelVisitAction, saveSoapAction, finalizeMedicalRecordAction, amendMedicalRecordAction, addDiagnosesAction, addProceduresAction, addVitalSignsAction, createPrescriptionAction } from "./actions";
+import { formatIDR, genderLabel, ageFromBirthDate } from "@/lib/utils";
+import { startVisitAction, completeVisitAction, cancelVisitAction, saveSoapAction, finalizeMedicalRecordAction, addDiagnosesAction, addVitalSignsAction, createPrescriptionAction } from "./actions";
 import type { ActionState } from "@/lib/auth/action-guard";
 
 export interface VisitDetailData {
@@ -38,10 +36,6 @@ export interface MasterOptions {
 }
 
 interface Props { visit: VisitDetailData; options: MasterOptions; canEdit: boolean; canFinalize: boolean; }
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return <div className="space-y-4"><h3 className="text-sm font-semibold">{title}</h3>{children}</div>;
-}
 
 function ActionForm({ label, action, fields, onSuccess }: { label: string; action: (prev: ActionState, fd: FormData) => Promise<ActionState>; fields?: Array<{ name: string; type?: string; placeholder?: string; defaultValue?: string; required?: boolean }>; onSuccess?: () => void }) {
   const router = useRouter();

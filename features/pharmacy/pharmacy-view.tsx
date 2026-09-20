@@ -2,13 +2,11 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { PackageCheck } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
-import { formatDate, formatTime } from "@/lib/utils";
-import { dispensePrescriptionItemAction } from "./actions";
+import { formatTime } from "@/lib/utils";
 
 export interface PharmacyRow {
   id: string;

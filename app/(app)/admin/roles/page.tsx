@@ -11,7 +11,7 @@ export default async function RolesPage() {
   const user = await getSessionUser();
   assertCan(user, "roles.view");
   const roles = await listRoles(user);
-  const permissions = await listPermissions(user);
+  const permissions = await listPermissions();
   const canManage = can(user, "roles.manage");
   const rolePermissionMap: Record<string, string[]> = {};
   for (const role of roles) {

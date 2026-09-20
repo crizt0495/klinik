@@ -14,7 +14,6 @@ import { createPurchaseOrderAction } from "./actions";
 import type { ActionState } from "@/lib/auth/action-guard";
 
 interface Supplier { id: string; name: string; }
-interface Med { id: string; name: string; unit: string; }
 interface MedOption { id: string; name: string; unit: string; }
 
 interface Props { suppliers: Supplier[]; medications: MedOption[]; }

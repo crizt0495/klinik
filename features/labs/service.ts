@@ -1,9 +1,9 @@
-import { and, eq, sql, desc, asc } from "drizzle-orm";
+import { and, eq, desc, asc } from "drizzle-orm";
 import { db } from "@/db";
 import * as s from "@/db/schema";
 import type { SessionUser } from "@/lib/auth/session";
 import { NotFoundError } from "@/lib/errors";
-import { writeAuditLog, writeActivityLog } from "@/lib/services/audit";
+import { writeAuditLog } from "@/lib/services/audit";
 
 export async function listLabOrders(user: SessionUser) {
   return db()

@@ -3,8 +3,8 @@ import { db } from "@/db";
 import { runInTransaction } from "@/db/transaction";
 import * as s from "@/db/schema";
 import type { SessionUser } from "@/lib/auth/session";
-import { NotFoundError, InvalidStateError, InsufficientStockError } from "@/lib/errors";
-import { writeAuditLog, writeActivityLog } from "@/lib/services/audit";
+import { NotFoundError, InvalidStateError } from "@/lib/errors";
+import { writeAuditLog } from "@/lib/services/audit";
 
 export async function listInvoices(user: SessionUser, status?: string) {
   const conditions = [eq(s.invoices.organizationId, user.organizationId)];
