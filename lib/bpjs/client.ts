@@ -39,7 +39,13 @@ export async function loadBpjsConnection(organizationId: string): Promise<BpjsCo
   const mockMode = env.mock ?? row?.mockMode ?? true;
   const enabled = env.enabled ?? row?.enabled ?? false;
 
+  const managedByEnv =
+    env.mock !== undefined ||
+    env.enabled !== undefined ||
+    Boolean(env.consId || env.secretKey || env.userKey || env.baseUrl || env.faskesCode || env.faskesName);
+
   return {
+    managedByEnv,
     enabled,
     mockMode,
     serviceBaseUrl: env.baseUrl || row?.serviceBaseUrl || null,

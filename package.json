@@ -13,7 +13,11 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx scripts/seed.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e:seed": "tsx scripts/e2e-local.ts seed",
+    "e2e:run": "tsx scripts/e2e-local.ts run",
+    "e2e:cleanup": "tsx scripts/e2e-local.ts cleanup",
+    "e2e:bpjs": "tsx scripts/e2e-bpjs-settings.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.4.2",

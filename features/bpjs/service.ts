@@ -2,11 +2,11 @@ import { and, eq, desc, sql, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import * as s from "@/db/schema";
 import type { SessionUser } from "@/lib/auth/session";
-import { NotFoundError, InvalidStateError } from "@/lib/errors";
+import { NotFoundError, InvalidStateError, ForbiddenError } from "@/lib/errors";
 import { generateBusinessNumber, datePeriodMonth } from "@/lib/services/numbering";
 import { writeAuditLog, writeActivityLog } from "@/lib/services/audit";
 import { createBpjsProvider, loadBpjsConnection, saveBpjsSettings } from "@/lib/bpjs/client";
-import type { EligibilityInput, SepPayload, TrialClaimPayload } from "@/lib/bpjs/types";
+import type { BpjsConnection, EligibilityInput, SepPayload, TrialClaimPayload } from "@/lib/bpjs/types";
 import { toBpjsDate } from "@/lib/bpjs/types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -616,9 +616,23 @@ export async function getClaimDetail(user: SessionUser, id: string) {
 // Settings
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function getBpjsSettingsView(user: SessionUser) {
+export interface BpjsSettingsView extends BpjsConnection {
+  lastTestedAt: string | null;
+  lastTestStatus: string | null;
+}
+
+export async function getBpjsSettingsView(user: SessionUser): Promise<BpjsSettingsView> {
   const conn = await loadBpjsConnection(user.organizationId);
-  return { ...conn };
+  const row = await db()
+    .select({ lastTestedAt: s.bpjsSettings.lastTestedAt, lastTestStatus: s.bpjsSettings.lastTestStatus })
+    .from(s.bpjsSettings)
+    .where(eq(s.bpjsSettings.organizationId, user.organizationId))
+    .limit(1);
+  return {
+    ...conn,
+    lastTestedAt: row[0]?.lastTestedAt ? new Date(row[0].lastTestedAt).toISOString() : null,
+    lastTestStatus: row[0]?.lastTestStatus ?? null,
+  };
 }
 
 export async function saveBpjsSettingsFromUser(user: SessionUser, input: {
@@ -631,6 +645,10 @@ export async function saveBpjsSettingsFromUser(user: SessionUser, input: {
   faskesCode?: string | null;
   faskesName?: string | null;
 }) {
+  const current = await loadBpjsConnection(user.organizationId);
+  if (current.managedByEnv) {
+    throw new ForbiddenError("Pengaturan BPJS ini dikelola melalui environment variable pada server dan tidak dapat diubah dari aplikasi.");
+  }
   await saveBpjsSettings(user.organizationId, input);
   await writeAuditLog({ user, action: "BPJS_SETTINGS_UPDATE", entityType: "bpjs_settings", newData: { enabled: input.enabled, mockMode: input.mockMode } });
 }

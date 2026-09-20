@@ -7,6 +7,12 @@ export interface BpjsConnection {
   userKey: string;
   faskesCode: string | null;
   faskesName: string | null;
+  /**
+   * True when any BPJS_* environment variable is set, meaning the effective
+   * settings come from the host environment (production deployments). In that
+   * case the settings form is read-only because the DB row has no effect.
+   */
+  managedByEnv?: boolean;
 }
 
 export interface EligibilityInput {

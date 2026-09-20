@@ -128,6 +128,7 @@ export class VClaimProvider implements BpjsProvider {
         headers: this.headers(),
         body: body === undefined ? undefined : JSON.stringify(body),
         cache: "no-store",
+        signal: AbortSignal.timeout(15_000),
       });
     } catch (err) {
       throw new BpjsApiError("NETWORK", `Tidak dapat terhubung ke layanan BPJS: ${err instanceof Error ? err.message : String(err)}`);

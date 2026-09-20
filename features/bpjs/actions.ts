@@ -72,16 +72,34 @@ const createClaimSchema = z.object({
 
 const submitClaimSchema = z.object({ id: uuid });
 
-const saveSettingsSchema = z.object({
-  enabled: z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean()),
-  mockMode: z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean()),
-  serviceBaseUrl: optStr,
-  consId: optStr,
-  secretKey: optStr,
-  userKey: optStr,
-  faskesCode: optStr,
-  faskesName: optStr,
-});
+const saveSettingsSchema = z
+  .object({
+    enabled: z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean()),
+    mockMode: z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean()),
+    serviceBaseUrl: optStr,
+    consId: optStr,
+    secretKey: optStr,
+    userKey: optStr,
+    faskesCode: optStr,
+    faskesName: optStr,
+  })
+  .superRefine((data, ctx) => {
+    // Mode produksi (VClaim asli) tidak boleh tanpa kredensial lengkap.
+    if (data.enabled && !data.mockMode) {
+      const required: Array<[keyof typeof data, string]> = [
+        ["serviceBaseUrl", "URL layanan BPJS wajib diisi untuk mode Produksi"],
+        ["consId", "Cons ID wajib diisi untuk mode Produksi"],
+        ["secretKey", "Secret Key wajib diisi untuk mode Produksi"],
+        ["userKey", "User Key wajib diisi untuk mode Produksi"],
+      ];
+      for (const [key, message] of required) {
+        const value = data[key];
+        if (!value || String(value).trim() === "") {
+          ctx.addIssue({ code: "custom", path: [key], message });
+        }
+      }
+    }
+  });
 
 export async function checkEligibilityAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   try {
@@ -202,16 +220,20 @@ export async function submitClaimAction(_prev: ActionState, fd: FormData): Promi
 export async function saveSettingsAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   try {
     const user = await getActionUser("bpjs.manage_settings");
-    const data = parseZod(saveSettingsSchema, Object.fromEntries(fd));
+    const raw = Object.fromEntries(fd);
+    const has = (key: string) => raw[key] !== undefined;
+    const data = parseZod(saveSettingsSchema, raw);
     await svc.saveBpjsSettingsFromUser(user, {
       enabled: data.enabled,
       mockMode: data.mockMode,
-      serviceBaseUrl: data.serviceBaseUrl ?? null,
-      consId: data.consId ?? "",
-      secretKey: data.secretKey ?? "",
-      userKey: data.userKey ?? "",
-      faskesCode: data.faskesCode ?? null,
-      faskesName: data.faskesName ?? null,
+      // Field yang tidak dirender (mis. saat memilih Mode Demo/Nonaktif) tidak
+      // ikut dikirim sehingga nilai yang sudah tersimpan tetap dipertahankan.
+      serviceBaseUrl: has("serviceBaseUrl") ? (data.serviceBaseUrl ?? null) : undefined,
+      consId: has("consId") ? (data.consId ?? "") : undefined,
+      secretKey: has("secretKey") ? (data.secretKey ?? "") : undefined,
+      userKey: has("userKey") ? (data.userKey ?? "") : undefined,
+      faskesCode: has("faskesCode") ? (data.faskesCode ?? null) : undefined,
+      faskesName: has("faskesName") ? (data.faskesName ?? null) : undefined,
     });
     revalidatePath("/bpjs/settings");
     return { success: true };
